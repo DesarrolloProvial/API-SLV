@@ -7,6 +7,29 @@ trae lo implementado; el resto de ambitos se agrega en 3.3/3.4.
 """
 
 
+def construir_vinculos(placa: str) -> dict:
+    """Construye los vinculos del expediente hacia lo implementado.
+
+    Fuente unica para no duplicar rutas entre contextos (3.3). El
+    candado por ambitos (filtrar lo no autorizado) llega en 3.4.
+
+    Args:
+        placa: Placa ya normalizada para las rutas.
+
+    Returns:
+        dict: Rutas de expediente, generales y los 4 subrecursos.
+    """
+    base = f"/api/v1/vehiculos/{placa}/expediente"
+    return {
+        "expediente": base,
+        "generales": f"{base}/generales",
+        "propietario": f"{base}/propietario",
+        "empresa": f"{base}/empresa",
+        "refrendos": f"{base}/refrendos",
+        "historial": f"{base}/historial",
+    }
+
+
 def armar_expediente(fila: dict, codigo_correlacion: str) -> dict:
     """Arma la respuesta de expediente con subconjunto de generales.
 
@@ -63,10 +86,7 @@ def armar_expediente(fila: dict, codigo_correlacion: str) -> dict:
             "empresa_esta_autorizada": fila.get("empresa_esta_autorizada"),
         },
         "refrendo_vigente": refrendo,
-        "vinculos": {
-            "expediente": f"/api/v1/vehiculos/{placa}/expediente",
-            "generales": f"/api/v1/vehiculos/{placa}/expediente/generales",
-        },
+        "vinculos": construir_vinculos(placa),
     }
 
 

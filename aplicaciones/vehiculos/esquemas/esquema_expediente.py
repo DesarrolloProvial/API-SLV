@@ -52,10 +52,14 @@ class EsquemaRefrendoVigente(Schema):
 
 
 class EsquemaVinculos(Schema):
-    """Solo lo implementado y autorizado (resto en 3.3/3.4)."""
+    """Lo implementado hasta 3.3 (el candado por ambitos llega en 3.4)."""
 
     expediente: str
     generales: str
+    propietario: str
+    empresa: str
+    refrendos: str
+    historial: str
 
 
 class EsquemaExpediente(Schema):

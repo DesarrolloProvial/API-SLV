@@ -11,6 +11,10 @@ from urllib.parse import unquote, urlparse
 from django.conf import settings
 from django.db import connections
 
+from aplicaciones.empresa.selectores.selector_empresa import obtener_empresa
+from aplicaciones.propietario.selectores.selector_propietario import (
+    obtener_propietario,
+)
 from aplicaciones.vehiculos.selectores.selector_busqueda import buscar_por_sufijo
 from aplicaciones.vehiculos.selectores.selector_expediente import (
     obtener_por_placa_exacta,
@@ -32,6 +36,28 @@ COLUMNAS_EXPEDIENTE = {
     "refrendo_fecha", "refrendo_vencimiento", "refrendo_estado",
     "propietario_nombre", "empresa_nombre", "empresa_autorizacion",
     "empresa_esta_autorizada",
+}
+
+COLUMNAS_PROPIETARIO = {
+    "placa_norma", "placa", "vigente_desde", "vigente_hasta",
+    "nombre_empresa",
+}
+
+COLUMNAS_EMPRESA = {
+    "placa_norma", "placa", "codigo_correlativo", "estado_aprobacion",
+    "activa", "nombre_empresa", "numero_autorizacion", "esta_autorizada",
+    "fecha_autorizacion",
+}
+
+COLUMNAS_REFRENDOS = {
+    "placa_norma", "placa", "codigo_refrendo", "fecha_refrendo",
+    "fecha_vencimiento", "estado", "vigencia_anios",
+}
+
+COLUMNAS_HISTORIAL = {
+    "placa_norma", "placa", "codigo_correlativo", "estado_aprobacion",
+    "activa", "vigente_desde", "fecha_baja", "motivo_baja_codigo",
+    "empresa_implementadora",
 }
 
 
@@ -120,6 +146,19 @@ class PruebaSelectoresEspejo(unittest.TestCase):
             COLUMNAS_EXPEDIENTE <= self._columnas("vista_expediente_v1")
         )
 
+    def test_vistas_subrecursos_exponen_contrato(self):
+        """Las 4 vistas de subrecursos traen las columnas que el ORM espera."""
+        self.assertTrue(
+            COLUMNAS_PROPIETARIO <= self._columnas("vista_propietario_v1")
+        )
+        self.assertTrue(COLUMNAS_EMPRESA <= self._columnas("vista_empresa_v1"))
+        self.assertTrue(
+            COLUMNAS_REFRENDOS <= self._columnas("vista_refrendos_v1")
+        )
+        self.assertTrue(
+            COLUMNAS_HISTORIAL <= self._columnas("vista_historial_v1")
+        )
+
     def test_buscar_inexistente_devuelve_vacio(self):
         """Un sufijo sin datos ejecuta y devuelve lista vacia."""
         self.assertEqual(buscar_por_sufijo("000000", "Z", 10), [])
@@ -127,3 +166,11 @@ class PruebaSelectoresEspejo(unittest.TestCase):
     def test_expediente_inexistente_devuelve_none(self):
         """Una placa ausente ejecuta y devuelve None (luego 404)."""
         self.assertIsNone(obtener_por_placa_exacta("ZZZ000000"))
+
+    def test_propietario_inexistente_devuelve_none(self):
+        """Una placa ausente ejecuta y devuelve None (luego 404)."""
+        self.assertIsNone(obtener_propietario("ZZZ000000"))
+
+    def test_empresa_inexistente_devuelve_none(self):
+        """Una placa ausente ejecuta y devuelve None (luego 404)."""
+        self.assertIsNone(obtener_empresa("ZZZ000000"))
