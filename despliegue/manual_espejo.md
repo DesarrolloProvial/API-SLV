@@ -75,12 +75,12 @@ CREATE PUBLICATION pub_intercambio FOR TABLE
 ```
 
 Verificación: `SELECT count(*) FROM pg_publication_tables
-WHERE pubname = 'pub_intercambio';` (esperado: 19).
+WHERE pubname = 'pub_intercambio';` (esperado: 18).
 
 ## 4. Verificación post-ventana (ERP)
 
 - `SHOW wal_level;` → `logical`.
-- Publicación con 19 tablas (§3).
+- Publicación con 18 tablas (§3).
 - Rol con solo replicación y lectura (§1).
 - El ERP opera normal (`:8001/:8080` responden); la ventana termina aquí.
 
