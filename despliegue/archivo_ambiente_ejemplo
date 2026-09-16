@@ -35,3 +35,5 @@ TOKENS_REVOCADOS=
 LIMITE_BUSCAR_TOPE=
 LIMITE_RECURSO_TOPE=
 VENTANA_LIMITE_SEG=
+# Redes extra (CIDR) para raspar /metricas fuera de la red privada.
+REDES_METRICAS_PERMITIDAS=

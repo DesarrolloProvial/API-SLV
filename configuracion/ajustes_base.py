@@ -71,6 +71,14 @@ LIMITE_BUSCAR_TOPE = int(os.getenv("LIMITE_BUSCAR_TOPE", "30"))
 LIMITE_RECURSO_TOPE = int(os.getenv("LIMITE_RECURSO_TOPE", "60"))
 VENTANA_LIMITE_SEG = int(os.getenv("VENTANA_LIMITE_SEG", "60"))
 
+#: Redes extra (CIDR, coma) que pueden raspar `/metricas` ademas de las
+#: privadas (el raspador central si vive fuera del rango privado).
+REDES_METRICAS_PERMITIDAS = [
+    r.strip()
+    for r in os.getenv("REDES_METRICAS_PERMITIDAS", "").split(",")
+    if r.strip()
+]
+
 ROOT_URLCONF = "configuracion.enrutado_principal"
 
 BASES_DATOS_NOMBRE = os.getenv("NOMBRE_BD", "espejo")

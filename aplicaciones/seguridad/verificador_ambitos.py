@@ -92,7 +92,24 @@ def autenticar_y_autorizar(peticion, recurso: str) -> tuple:
         PermisoDenegado: Si el token no trae el ambito (403).
     """
     reclamos = autenticar_peticion(peticion)
-    return reclamos, exigir_ambitos(reclamos, recurso)
+    ambitos = exigir_ambitos(reclamos, recurso)
+    peticion.cliente_intercambio = _cliente_desde_reclamos(reclamos)
+    peticion.ambitos_intercambio = set(ambitos)
+    return reclamos, ambitos
+
+
+def _cliente_desde_reclamos(reclamos: dict) -> str:
+    """Calcula la identidad de metricas (misma que la cuota).
+
+    Args:
+        reclamos: Reclamos verificados del token.
+
+    Returns:
+        str: `client_id`/`sub`/`azp` o `anonimo` como ultimo recurso.
+    """
+    from aplicaciones.seguridad.aplicador_limites import clave_cliente
+
+    return clave_cliente(reclamos)
 
 
 def filtrar_vinculos(vinculos: dict, ambitos: set) -> dict:

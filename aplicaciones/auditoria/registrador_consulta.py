@@ -81,6 +81,8 @@ def recurso_desde_ruta(ruta: str) -> str:
     partes = [p for p in ruta.strip("/").split("/") if p]
     if partes == ["salud"]:
         return "salud"
+    if partes == ["metricas"]:
+        return "metricas"
     if len(partes) < 3 or partes[0] != "api" or partes[1] != "v1":
         return "otro"
     resto = partes[2:]

@@ -1,5 +1,8 @@
 """Enrutado principal: solo delega a enrutadores por contexto."""
-from django.http import JsonResponse
+import ipaddress
+
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse
 from django.urls import path
 from ninja import NinjaAPI
 
@@ -39,6 +42,58 @@ def vista_salud(peticion):
     return JsonResponse({"estado": "correcto"})
 
 
+def vista_metricas(peticion):
+    """Expone las metricas Prometheus solo a la red interna.
+
+    Sin token (el raspado no se autentica); el control es la red:
+    nginx solo la proxya en red interna y esta vista niega con 404
+    cualquier origen fuera de las redes privadas o de
+    `REDES_METRICAS_PERMITIDAS`.
+
+    Args:
+        peticion: Peticion HTTP entrante.
+
+    Returns:
+        HttpResponse: Texto Prometheus o 404 uniforme sin fuga.
+    """
+    if not _es_red_interna(peticion):
+        return JsonResponse(
+            construir_error_no_encontrado(obtener_codigo(peticion)), status=404
+        )
+    from aplicaciones.auditoria.metricas_negocio import exponer_metricas
+
+    return HttpResponse(
+        exponer_metricas(),
+        content_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+
+
+def _es_red_interna(peticion) -> bool:
+    """Indica si el origen pertenece a la red interna permitida.
+
+    Args:
+        peticion: Peticion HTTP con `REMOTE_ADDR`.
+
+    Returns:
+        bool: True si es IP privada o de las redes configuradas.
+    """
+    try:
+        origen = ipaddress.ip_address(
+            peticion.META.get("REMOTE_ADDR", "").split(",")[0].strip()
+        )
+    except ValueError:
+        return False
+    if origen.is_private or origen.is_loopback:
+        return True
+    for red in getattr(settings, "REDES_METRICAS_PERMITIDAS", []) or []:
+        try:
+            if origen in ipaddress.ip_network(red, strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 api = NinjaAPI(
     title="Intercambio de vehiculos",
     version="1.0.0",
@@ -74,5 +129,6 @@ handler404 = vista_no_encontrada
 
 urlpatterns = [
     path("salud", vista_salud, name="salud"),
+    path("metricas", vista_metricas, name="metricas"),
     path("api/", api.urls),
 ]

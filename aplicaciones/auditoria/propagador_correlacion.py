@@ -11,8 +11,14 @@ Gancho fase 4: tablero, metricas de negocio, alertas antiabuso y export
 a frio viven en `registrador_consulta.py` + `observabilidad/`; aqui solo
 queda el gancho (`propagar_correlacion_bd` + `registrar_consulta`).
 """
+import time
 import uuid
 
+from aplicaciones.auditoria.metricas_negocio import (
+    observar_candidatas,
+    observar_error_bd,
+    observar_peticion,
+)
 from aplicaciones.auditoria.registrador_consulta import (
     recurso_desde_ruta,
     registrar_consulta,
@@ -58,16 +64,32 @@ class MiddlewareCodigoCorrelacion:
             _codigo_del_borde(peticion) or generar_codigo_correlacion()
         )
         propagar_correlacion_bd(peticion.codigo_correlacion)
+        inicio = time.monotonic()
         respuesta = self.get_response(peticion)
+        duracion = time.monotonic() - inicio
         respuesta["Cache-Control"] = "no-store"
         respuesta["X-Codigo-Correlacion"] = peticion.codigo_correlacion
         reintento = getattr(peticion, "limite_reintento_en", None)
         if reintento is not None:
             respuesta["Retry-After"] = str(max(1, int(reintento)))
+        recurso = recurso_desde_ruta(peticion.path)
+        cliente = getattr(peticion, "cliente_intercambio", "") or ""
+        observar_peticion(
+            recurso,
+            respuesta.status_code,
+            duracion,
+            _tamano_respuesta(respuesta),
+            cliente or "anonimo",
+            getattr(peticion, "ambitos_intercambio", None) or (),
+        )
+        candidatas = getattr(peticion, "candidatas_observadas", None)
+        if candidatas is not None:
+            observar_candidatas(candidatas)
         registrar_consulta(
             peticion.codigo_correlacion,
-            recurso_desde_ruta(peticion.path),
+            recurso,
             respuesta.status_code,
+            cliente or None,
         )
         return respuesta
 
@@ -120,9 +142,26 @@ def propagar_correlacion_bd(codigo: str) -> None:
     try:
         from django.db import connection
 
+        if connection.vendor != "postgresql":
+            return
         with connection.cursor() as cursor:
             cursor.execute(
                 "SET application_name = %s", [f"intercambio:{codigo}"]
             )
     except Exception:
-        return
+        observar_error_bd()
+
+
+def _tamano_respuesta(respuesta) -> int:
+    """Mide el cuerpo respondido sin romper respuestas sin contenido.
+
+    Args:
+        respuesta: Respuesta HTTP ya procesada.
+
+    Returns:
+        int: Bytes del cuerpo o 0 si no se puede medir.
+    """
+    try:
+        return len(respuesta.content or b"")
+    except Exception:
+        return 0

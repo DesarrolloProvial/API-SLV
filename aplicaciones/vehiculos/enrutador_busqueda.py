@@ -86,6 +86,7 @@ def buscar_vehiculos(request: HttpRequest, placa: str | None = None):
     )
     if not candidatas:
         return 404, construir_error_no_encontrado(codigo)
+    request.candidatas_observadas = len(candidatas)
     return 200, {
         "codigo_correlacion": codigo,
         "placa": norma,
