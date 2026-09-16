@@ -28,5 +28,22 @@ services:
     volumes:
       - datos-espejo:/var/lib/postgresql/data
 
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ../configuracion/pasarela/servidor_nginx.conf:/etc/nginx/conf.d/intercambio.conf:ro
+    depends_on:
+      - api
+
+  tunel:
+    image: cloudflare/cloudflared:2026.9.0
+    command: tunnel --config /etc/cloudflared/configuracion.yaml run
+    volumes:
+      - ../configuracion/pasarela/tunel_ejemplo.yaml:/etc/cloudflared/configuracion.yaml:ro
+    environment:
+      TUNEL_ID: ${TUNEL_ID}
+    depends_on:
+      - nginx
+
 volumes:
   datos-espejo:
