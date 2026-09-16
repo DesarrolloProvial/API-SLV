@@ -1,11 +1,22 @@
-"""Propagacion del codigo de correlacion (seam minimo PR4).
+"""Propagacion del codigo de correlacion (tarea 3.4).
 
-Genera el `codigo_correlacion` (UUIDv7) por peticion, lo expone en
-`peticion.codigo_correlacion` y marca toda respuesta con
-`Cache-Control: no-store`. La propagacion completa (cabecera hacia el
-borde, `application_name` en PostgreSQL y campos de registro) se cierra
-en la tarea 3.4.
+Genera el `codigo_correlacion` (UUIDv7) por peticion o reutiliza el del
+borde (`X-Codigo-Correlacion`), lo expone en `peticion.codigo_correlacion`
+y marca toda respuesta con `Cache-Control: no-store`, su codigo y
+`Retry-After` cuando hubo cuota. Antes de la vista fija
+`application_name` en PostgreSQL (`intercambio:<codigo>`) y al cerrar
+registra una linea estructurada (sin personales ni secretos).
+
+Gancho fase 4: tablero, metricas de negocio, alertas antiabuso y export
+a frio viven en `registrador_consulta.py` + `observabilidad/`; aqui solo
+queda el gancho (`propagar_correlacion_bd` + `registrar_consulta`).
 """
+import uuid
+
+from aplicaciones.auditoria.registrador_consulta import (
+    recurso_desde_ruta,
+    registrar_consulta,
+)
 import uuid
 
 
@@ -47,12 +58,18 @@ class MiddlewareCodigoCorrelacion:
         peticion.codigo_correlacion = (
             _codigo_del_borde(peticion) or generar_codigo_correlacion()
         )
+        propagar_correlacion_bd(peticion.codigo_correlacion)
         respuesta = self.get_response(peticion)
         respuesta["Cache-Control"] = "no-store"
         respuesta["X-Codigo-Correlacion"] = peticion.codigo_correlacion
         reintento = getattr(peticion, "limite_reintento_en", None)
         if reintento is not None:
             respuesta["Retry-After"] = str(max(1, int(reintento)))
+        registrar_consulta(
+            peticion.codigo_correlacion,
+            recurso_desde_ruta(peticion.path),
+            respuesta.status_code,
+        )
         return respuesta
 
 
@@ -89,3 +106,24 @@ def _codigo_del_borde(peticion) -> str | None:
     if any(c.isspace() for c in texto):
         return None
     return texto
+
+
+def propagar_correlacion_bd(codigo: str) -> None:
+    """Fija `application_name` en PostgreSQL para rastrear la peticion.
+
+    Sin sobrecosto: un `SET` local por peticion; en sqlite/desarrollo o
+    sin BD se ignora en silencio (fase 4 lo verifica contra el espejo
+    real con `SELECT current_setting('application_name')`).
+
+    Args:
+        codigo: Codigo de correlacion vigente de la peticion.
+    """
+    try:
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SET application_name = %s", [f"intercambio:{codigo}"]
+            )
+    except Exception:
+        return
