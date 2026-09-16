@@ -6,7 +6,12 @@ from aplicaciones.auditoria.propagador_correlacion import obtener_codigo
 from aplicaciones.propietario.esquemas.esquema_propietario import EsquemaPropietario
 from aplicaciones.propietario.selectores.selector_propietario import obtener_propietario
 from aplicaciones.propietario.servicios.armador_propietario import armar_propietario
+from aplicaciones.seguridad.aplicador_limites import (
+    LimiteExcedido,
+    verificar_limite,
+)
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_limite_excedido,
     construir_error_no_autenticado,
     construir_error_no_encontrado,
     construir_error_sin_permiso,
@@ -34,6 +39,7 @@ enrutador = Router()
         401: EsquemaError,
         403: EsquemaError,
         404: EsquemaError,
+        429: EsquemaError,
     },
     tags=["propietario"],
     summary="Propietario vigente por placa exacta",
@@ -56,11 +62,16 @@ def ver_propietario(request: HttpRequest, placa: str):
     """
     codigo = obtener_codigo(request)
     try:
-        _, ambitos = autenticar_y_autorizar(request, "propietario")
+        reclamos, ambitos = autenticar_y_autorizar(request, "propietario")
     except TokenInvalido:
         return 401, construir_error_no_autenticado(codigo)
     except PermisoDenegado:
         return 403, construir_error_sin_permiso(codigo)
+    try:
+        verificar_limite(request, reclamos, "propietario")
+    except LimiteExcedido as excedido:
+        request.limite_reintento_en = excedido.reintentar_en
+        return 429, construir_error_limite_excedido(codigo)
     norma = normalizar_placa(placa)
     if not norma:
         return 404, construir_error_no_encontrado(codigo)

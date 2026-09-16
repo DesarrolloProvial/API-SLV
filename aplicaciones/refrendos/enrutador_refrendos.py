@@ -8,8 +8,13 @@ from aplicaciones.refrendos.servicios.servicio_refrendos import (
     armar_respuesta_refrendos,
     paginar_refrendos,
 )
+from aplicaciones.seguridad.aplicador_limites import (
+    LimiteExcedido,
+    verificar_limite,
+)
 from aplicaciones.seguridad.cursor_opaco import CursorInvalido
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_limite_excedido,
     construir_error_no_autenticado,
     construir_error_no_encontrado,
     construir_error_sin_permiso,
@@ -37,6 +42,7 @@ enrutador = Router()
         401: EsquemaError,
         403: EsquemaError,
         404: EsquemaError,
+        429: EsquemaError,
     },
     tags=["refrendos"],
     summary="Refrendos paginados con cursor opaco",
@@ -60,11 +66,16 @@ def ver_refrendos(request: HttpRequest, placa: str, cursor: str | None = None):
     """
     codigo = obtener_codigo(request)
     try:
-        _, ambitos = autenticar_y_autorizar(request, "refrendos")
+        reclamos, ambitos = autenticar_y_autorizar(request, "refrendos")
     except TokenInvalido:
         return 401, construir_error_no_autenticado(codigo)
     except PermisoDenegado:
         return 403, construir_error_sin_permiso(codigo)
+    try:
+        verificar_limite(request, reclamos, "refrendos")
+    except LimiteExcedido as excedido:
+        request.limite_reintento_en = excedido.reintentar_en
+        return 429, construir_error_limite_excedido(codigo)
     norma = normalizar_placa(placa)
     if not norma:
         return 404, construir_error_no_encontrado(codigo)

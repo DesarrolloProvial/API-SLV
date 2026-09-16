@@ -33,16 +33,26 @@ class MiddlewareCodigoCorrelacion:
     def __call__(self, peticion):
         """Genera el codigo, procesa y sella la respuesta.
 
+        Reutiliza `X-Codigo-Correlacion` del borde si viene (generado en
+        borde, propagado como cabecera); si no, genera uno nuevo. Toda
+        respuesta lleva `Cache-Control: no-store`, su codigo en cuerpo y
+        cabecera, y `Retry-After` cuando el enrutador marco cuota.
+
         Args:
             peticion: Peticion HTTP entrante.
 
         Returns:
-            La respuesta con `Cache-Control: no-store`.
+            La respuesta sellada con correlacion y sin cache.
         """
-        peticion.codigo_correlacion = generar_codigo_correlacion()
+        peticion.codigo_correlacion = (
+            _codigo_del_borde(peticion) or generar_codigo_correlacion()
+        )
         respuesta = self.get_response(peticion)
         respuesta["Cache-Control"] = "no-store"
         respuesta["X-Codigo-Correlacion"] = peticion.codigo_correlacion
+        reintento = getattr(peticion, "limite_reintento_en", None)
+        if reintento is not None:
+            respuesta["Retry-After"] = str(max(1, int(reintento)))
         return respuesta
 
 
@@ -57,3 +67,25 @@ def obtener_codigo(peticion) -> str:
     """
     codigo = getattr(peticion, "codigo_correlacion", None)
     return codigo if codigo else generar_codigo_correlacion()
+
+
+def _codigo_del_borde(peticion) -> str | None:
+    """Lee el codigo que envio el borde, si es valido.
+
+    Args:
+        peticion: Peticion HTTP con cabeceras del borde.
+
+    Returns:
+        str | None: Codigo del borde o None si no viene o es invalido.
+    """
+    cabecera = ""
+    if hasattr(peticion, "headers"):
+        cabecera = peticion.headers.get("X-Codigo-Correlacion", "")
+    if not cabecera:
+        cabecera = peticion.META.get("HTTP_X_CODIGO_CORRELACION", "")
+    texto = cabecera.strip()
+    if len(texto) < 8 or len(texto) > 64:
+        return None
+    if any(c.isspace() for c in texto):
+        return None
+    return texto

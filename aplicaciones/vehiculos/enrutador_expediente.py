@@ -3,7 +3,12 @@ from django.http import HttpRequest
 from ninja import Router
 
 from aplicaciones.auditoria.propagador_correlacion import obtener_codigo
+from aplicaciones.seguridad.aplicador_limites import (
+    LimiteExcedido,
+    verificar_limite,
+)
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_limite_excedido,
     construir_error_no_autenticado,
     construir_error_no_encontrado,
     construir_error_sin_permiso,
@@ -57,6 +62,7 @@ def _fila_o_error(norma: str, codigo: str):
         401: EsquemaError,
         403: EsquemaError,
         404: EsquemaError,
+        429: EsquemaError,
     },
     tags=["vehiculos"],
     summary="Expediente por placa exacta",
@@ -76,11 +82,16 @@ def ver_expediente(request: HttpRequest, placa: str):
     """
     codigo = obtener_codigo(request)
     try:
-        _, ambitos = autenticar_y_autorizar(request, "expediente")
+        reclamos, ambitos = autenticar_y_autorizar(request, "expediente")
     except TokenInvalido:
         return 401, construir_error_no_autenticado(codigo)
     except PermisoDenegado:
         return 403, construir_error_sin_permiso(codigo)
+    try:
+        verificar_limite(request, reclamos, "expediente")
+    except LimiteExcedido as excedido:
+        request.limite_reintento_en = excedido.reintentar_en
+        return 429, construir_error_limite_excedido(codigo)
     fila, error = _fila_o_error(normalizar_placa(placa), codigo)
     if error is not None:
         return 404, error
@@ -94,6 +105,7 @@ def ver_expediente(request: HttpRequest, placa: str):
         401: EsquemaError,
         403: EsquemaError,
         404: EsquemaError,
+        429: EsquemaError,
     },
     tags=["vehiculos"],
     summary="Generales por placa exacta",
@@ -110,11 +122,16 @@ def ver_generales(request: HttpRequest, placa: str):
     """
     codigo = obtener_codigo(request)
     try:
-        _, ambitos = autenticar_y_autorizar(request, "generales")
+        reclamos, ambitos = autenticar_y_autorizar(request, "generales")
     except TokenInvalido:
         return 401, construir_error_no_autenticado(codigo)
     except PermisoDenegado:
         return 403, construir_error_sin_permiso(codigo)
+    try:
+        verificar_limite(request, reclamos, "generales")
+    except LimiteExcedido as excedido:
+        request.limite_reintento_en = excedido.reintentar_en
+        return 429, construir_error_limite_excedido(codigo)
     fila, error = _fila_o_error(normalizar_placa(placa), codigo)
     if error is not None:
         return 404, error
