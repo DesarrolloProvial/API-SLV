@@ -1,0 +1,32 @@
+# Composicion de desarrollo (infra dedicada minima)
+name: intercambio-desarrollo
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: despliegue/archivo_docker
+    environment:
+      LLAVE_SECRETA: ${LLAVE_SECRETA}
+      ANFITRIONES_PERMITIDOS: ${ANFITRIONES_PERMITIDOS}
+      NOMBRE_BD: ${NOMBRE_BD}
+      USUARIO_BD: ${USUARIO_BD}
+      CLAVE_BD: ${CLAVE_BD}
+      ANFITRION_BD: postgres-espejo
+      PUERTO_BD: "5432"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres-espejo
+
+  postgres-espejo:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${NOMBRE_BD}
+      POSTGRES_USER: ${USUARIO_BD}
+      POSTGRES_PASSWORD: ${CLAVE_BD}
+    volumes:
+      - datos-espejo:/var/lib/postgresql/data
+
+volumes:
+  datos-espejo:
