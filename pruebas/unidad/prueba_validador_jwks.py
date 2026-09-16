@@ -63,6 +63,16 @@ class PruebaValidadorJwks(SimpleTestCase):
         with self.assertRaises(TokenInvalido):
             validar_token(token)
 
+    @override_settings(TOKENS_REVOCADOS=["jti-lista-emergencia"])
+    def test_jti_en_lista_de_emergencia_se_rechaza(self):
+        """Un `jti` de `TOKENS_REVOCADOS` se deniega (kill-switch paso 1)."""
+        token = emitir_token_prueba(
+            ["vehiculos.lectura"],
+            reclamos_extra={"jti": "jti-lista-emergencia"},
+        )
+        with self.assertRaises(TokenInvalido):
+            validar_token(token)
+
     def test_peticion_sin_portador_se_rechaza(self):
         """Sin cabecera o sin esquema `Bearer` hay `TokenInvalido`."""
         for autorizacion in ("", "Token abc.def.ghi", "Bearer "):
