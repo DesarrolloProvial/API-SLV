@@ -1,0 +1,32 @@
+# Entorno local
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Django
+db.sqlite3
+media/
+estaticos_recogidos/
+
+# Llaves y secretos (nunca se versionan)
+*.pem
+*.key
+*.p12
+*.pfx
+secreto*.json
+
+# Docker
+.dockerignore
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~
