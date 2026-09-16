@@ -6,6 +6,8 @@ Cursor invalido -> `CursorInvalido` (el enrutador da el 404 uniforme).
 """
 from typing import Final
 
+from django.conf import settings
+
 from aplicaciones.refrendos.selectores.selector_refrendos import listar_refrendos
 from aplicaciones.seguridad.cursor_opaco import (
     CursorInvalido,
@@ -13,19 +15,19 @@ from aplicaciones.seguridad.cursor_opaco import (
     emitir_cursor,
 )
 
-#: Tope de dia 0; calibrar en convenio (ver 3.4).
+#: Tope de dia 0 (calibrable por convenio via `TOPE_REFERENDOS`).
 TOPE_REFERENDOS: Final[int] = 10
 
 
 def paginar_refrendos(
-    placa_norma: str, cursor: str | None, tope: int = TOPE_REFERENDOS
+    placa_norma: str, cursor: str | None, tope: int | None = None
 ) -> tuple[list[dict], str | None]:
     """Pagina refrendos con cursor opaco ligado a la placa.
 
     Args:
         placa_norma: Placa ya normalizada (filtro del cursor y selector).
         cursor: Token opaco de la pagina anterior (None en la primera).
-        tope: Maximo de elementos por pagina.
+        tope: Maximo por pagina (None = central `TOPE_REFERENDOS`).
 
     Returns:
         Tupla `(elementos, cursor_siguiente)`; `cursor_siguiente` es None
@@ -34,6 +36,9 @@ def paginar_refrendos(
     Raises:
         CursorInvalido: Si el cursor es ilegible, manipulado o de otra placa.
     """
+    tope = tope if tope is not None else int(
+        getattr(settings, "TOPE_REFERENDOS", TOPE_REFERENDOS)
+    )
     desplazamiento = 0
     if cursor:
         desplazamiento = decodificar_cursor(cursor, placa_norma)

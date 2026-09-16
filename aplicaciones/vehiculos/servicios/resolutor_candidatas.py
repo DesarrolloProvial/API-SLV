@@ -8,10 +8,26 @@ aparece. Sin conteos: `truncado` solo indica si hubo mas alla del tope.
 import re
 from typing import Final
 
+from django.conf import settings
+
 PATRON_SUFIJO: Final = re.compile(r"[0-9]{3}[A-Z]{3}$")
 
-#: Tope convenido de dia 0; se calibra en el convenio (ver 3.4).
+#: Tope de dia 0 (calibrable por convenio via `TOPE_CANDIDATAS`).
 TOPE_CANDIDATAS: Final[int] = 10
+
+
+def tope_vigente(tope: int | None = None) -> int:
+    """Resuelve el tope central (ajuste) o el de dia 0.
+
+    Args:
+        tope: Tope explicito (pruebas) o None para el central.
+
+    Returns:
+        int: Tope a aplicar.
+    """
+    if tope is not None:
+        return tope
+    return int(getattr(settings, "TOPE_CANDIDATAS", TOPE_CANDIDATAS))
 
 
 def extraer_sufijo_y_tipo(placa_norma: str) -> tuple[str, str] | None:
@@ -35,7 +51,7 @@ def resolver_por_sufijo_y_tipo(
     sufijo: str,
     tipo_letra: str,
     filas: list[dict],
-    tope: int = TOPE_CANDIDATAS,
+    tope: int | None = None,
 ) -> tuple[list[dict], bool]:
     """Convierte filas del selector en candidatas del mismo tipo.
 
@@ -43,12 +59,13 @@ def resolver_por_sufijo_y_tipo(
         sufijo: Ultimos 6 ya validados (trazabilidad, no se re-deriva).
         tipo_letra: Primera letra consultada; filtra en defensa propia.
         filas: Filas ya ordenadas (`activa DESC, placa_norma ASC`).
-        tope: Maximo de candidatas a devolver.
+        tope: Maximo de candidatas (None = central `TOPE_CANDIDATAS`).
 
     Returns:
         Tupla `(candidatas, truncado)`; `truncado` es True si hubo mas.
     """
     _ = sufijo
+    tope = tope_vigente(tope)
     propias = [f for f in filas if (f.get("placa_norma") or "").startswith(tipo_letra)]
     return [armar_candidata(f) for f in propias[:tope]], len(propias) > tope
 

@@ -1,0 +1,1619 @@
+{
+  "components": {
+    "schemas": {
+      "EsquemaCandidata": {
+        "description": "Ficha minima de una candidata del mismo tipo.",
+        "properties": {
+          "empresa_implementadora": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Implementadora"
+          },
+          "linea": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linea"
+          },
+          "marca": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marca"
+          },
+          "modelo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelo"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculoExpediente"
+          }
+        },
+        "required": [
+          "placa",
+          "vinculos"
+        ],
+        "title": "EsquemaCandidata",
+        "type": "object"
+      },
+      "EsquemaEmpresa": {
+        "description": "Respuesta 200 de empresa por placa exacta.",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "empresa": {
+            "$ref": "#/components/schemas/EsquemaEmpresaDatos"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculos"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "empresa",
+          "vinculos"
+        ],
+        "title": "EsquemaEmpresa",
+        "type": "object"
+      },
+      "EsquemaEmpresaDatos": {
+        "description": "Empresa implementadora vigente (sin personales ni representantes).",
+        "properties": {
+          "activa": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activa"
+          },
+          "codigo_correlativo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Correlativo"
+          },
+          "esta_autorizada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Esta Autorizada"
+          },
+          "estado_aprobacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado Aprobacion"
+          },
+          "fecha_autorizacion": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Autorizacion"
+          },
+          "nombre_empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre Empresa"
+          },
+          "numero_autorizacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Autorizacion"
+          }
+        },
+        "title": "EsquemaEmpresaDatos",
+        "type": "object"
+      },
+      "EsquemaError": {
+        "description": "Error uniforme en espanol con correlacion (p. ej. 404).",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "mensaje": {
+            "title": "Mensaje",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "mensaje",
+          "codigo_correlacion"
+        ],
+        "title": "EsquemaError",
+        "type": "object"
+      },
+      "EsquemaExpediente": {
+        "description": "Respuesta 200 de expediente por placa exacta.",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "refrendo_vigente": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EsquemaRefrendoVigente"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vehiculo": {
+            "$ref": "#/components/schemas/EsquemaVehiculo"
+          },
+          "vinculacion": {
+            "$ref": "#/components/schemas/EsquemaVinculacion"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculos"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "vehiculo",
+          "vinculacion",
+          "vinculos"
+        ],
+        "title": "EsquemaExpediente",
+        "type": "object"
+      },
+      "EsquemaGenerales": {
+        "description": "Respuesta 200 de generales (subconjunto sin restringidos).",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "generales": {
+            "$ref": "#/components/schemas/EsquemaVehiculo"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculos"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "generales",
+          "vinculos"
+        ],
+        "title": "EsquemaGenerales",
+        "type": "object"
+      },
+      "EsquemaPeriodoHistorial": {
+        "description": "Periodo con baja solo como codigo convenido (sin detalle).",
+        "properties": {
+          "activa": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activa"
+          },
+          "codigo_correlativo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Correlativo"
+          },
+          "empresa_implementadora": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Implementadora"
+          },
+          "estado_aprobacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado Aprobacion"
+          },
+          "fecha_baja": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Baja"
+          },
+          "motivo_baja_codigo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo Baja Codigo"
+          },
+          "vigente_desde": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Desde"
+          }
+        },
+        "title": "EsquemaPeriodoHistorial",
+        "type": "object"
+      },
+      "EsquemaPropietario": {
+        "description": "Respuesta 200 de propietario por placa exacta.",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "propietario": {
+            "$ref": "#/components/schemas/EsquemaPropietarioDatos"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculos"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "propietario",
+          "vinculos"
+        ],
+        "title": "EsquemaPropietario",
+        "type": "object"
+      },
+      "EsquemaPropietarioDatos": {
+        "description": "Titularidad vigente minima (sin personales: van por convenio).",
+        "properties": {
+          "nombre_empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre Empresa"
+          },
+          "vigente_desde": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Desde"
+          },
+          "vigente_hasta": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Hasta"
+          }
+        },
+        "title": "EsquemaPropietarioDatos",
+        "type": "object"
+      },
+      "EsquemaRefrendo": {
+        "description": "Refrendo sin observacion ni motivo (excluidos por construccion).",
+        "properties": {
+          "codigo_refrendo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Refrendo"
+          },
+          "estado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado"
+          },
+          "fecha_refrendo": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Refrendo"
+          },
+          "fecha_vencimiento": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Vencimiento"
+          },
+          "vigencia_anios": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigencia Anios"
+          }
+        },
+        "title": "EsquemaRefrendo",
+        "type": "object"
+      },
+      "EsquemaRefrendoVigente": {
+        "description": "Ultimo refrendo por fecha (None si no hay vigente).",
+        "properties": {
+          "codigo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo"
+          },
+          "estado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado"
+          },
+          "fecha": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha"
+          },
+          "vencimiento": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vencimiento"
+          }
+        },
+        "title": "EsquemaRefrendoVigente",
+        "type": "object"
+      },
+      "EsquemaRespuestaBusqueda": {
+        "description": "Respuesta 200 de buscar: candidatas mas `truncado` (sin totales).",
+        "properties": {
+          "candidatas": {
+            "items": {
+              "$ref": "#/components/schemas/EsquemaCandidata"
+            },
+            "title": "Candidatas",
+            "type": "array"
+          },
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "truncado": {
+            "title": "Truncado",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "candidatas",
+          "truncado"
+        ],
+        "title": "EsquemaRespuestaBusqueda",
+        "type": "object"
+      },
+      "EsquemaRespuestaHistorial": {
+        "description": "Respuesta 200 paginada: elementos mas cursor, sin totales.",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "cursor_siguiente": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor Siguiente"
+          },
+          "historial": {
+            "items": {
+              "$ref": "#/components/schemas/EsquemaPeriodoHistorial"
+            },
+            "title": "Historial",
+            "type": "array"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculos"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "historial",
+          "vinculos"
+        ],
+        "title": "EsquemaRespuestaHistorial",
+        "type": "object"
+      },
+      "EsquemaRespuestaRefrendos": {
+        "description": "Respuesta 200 paginada: elementos mas cursor, sin totales.",
+        "properties": {
+          "codigo_correlacion": {
+            "title": "Codigo Correlacion",
+            "type": "string"
+          },
+          "cursor_siguiente": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor Siguiente"
+          },
+          "placa": {
+            "title": "Placa",
+            "type": "string"
+          },
+          "refrendos": {
+            "items": {
+              "$ref": "#/components/schemas/EsquemaRefrendo"
+            },
+            "title": "Refrendos",
+            "type": "array"
+          },
+          "vinculos": {
+            "$ref": "#/components/schemas/EsquemaVinculos"
+          }
+        },
+        "required": [
+          "codigo_correlacion",
+          "placa",
+          "refrendos",
+          "vinculos"
+        ],
+        "title": "EsquemaRespuestaRefrendos",
+        "type": "object"
+      },
+      "EsquemaVehiculo": {
+        "description": "Caracterizacion operativa (sin `vin` ni tarjeta: restringidos).",
+        "properties": {
+          "activa": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activa"
+          },
+          "asientos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asientos"
+          },
+          "centimetros_cubicos": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Centimetros Cubicos"
+          },
+          "chasis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chasis"
+          },
+          "cilindraje": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cilindraje"
+          },
+          "clasificacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clasificacion"
+          },
+          "codigo_correlativo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Correlativo"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "departamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departamento"
+          },
+          "ejes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ejes"
+          },
+          "estado_aprobacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado Aprobacion"
+          },
+          "fecha_codigo": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Codigo"
+          },
+          "linea": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linea"
+          },
+          "marca": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marca"
+          },
+          "modelo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelo"
+          },
+          "motor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motor"
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipio"
+          },
+          "serie": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serie"
+          },
+          "tipo_placa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo Placa"
+          },
+          "tipo_slv_codigo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo Slv Codigo"
+          },
+          "tipo_slv_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo Slv Nombre"
+          },
+          "tipo_vehiculo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo Vehiculo"
+          },
+          "toneladas": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toneladas"
+          },
+          "uso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uso"
+          }
+        },
+        "title": "EsquemaVehiculo",
+        "type": "object"
+      },
+      "EsquemaVinculacion": {
+        "description": "Vinculacion vigente con propietario y empresa.",
+        "properties": {
+          "empresa_autorizacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Autorizacion"
+          },
+          "empresa_esta_autorizada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Esta Autorizada"
+          },
+          "empresa_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Nombre"
+          },
+          "propietario_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Propietario Nombre"
+          }
+        },
+        "title": "EsquemaVinculacion",
+        "type": "object"
+      },
+      "EsquemaVinculoExpediente": {
+        "description": "Vinculo hacia el expediente para desambiguar en dos pasos.",
+        "properties": {
+          "expediente": {
+            "title": "Expediente",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expediente"
+        ],
+        "title": "EsquemaVinculoExpediente",
+        "type": "object"
+      },
+      "EsquemaVinculos": {
+        "description": "Lo autorizado del token (3.4): base siempre, subrecursos opcionales.",
+        "properties": {
+          "empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa"
+          },
+          "expediente": {
+            "title": "Expediente",
+            "type": "string"
+          },
+          "generales": {
+            "title": "Generales",
+            "type": "string"
+          },
+          "historial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Historial"
+          },
+          "propietario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Propietario"
+          },
+          "refrendos": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refrendos"
+          }
+        },
+        "required": [
+          "expediente",
+          "generales"
+        ],
+        "title": "EsquemaVinculos",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "",
+    "title": "Intercambio de vehiculos",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/vehiculos/buscar": {
+      "get": {
+        "description": "Busca por placa completa; 404 uniforme si no resuelve.\n\nExige `vehiculos.lectura`: sin token -> 401, sin ambito -> 403,\nambos uniformes y sin dato.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa completa del consumidor (unica via).\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 con candidatas o error uniforme.",
+        "operationId": "aplicaciones_vehiculos_enrutador_busqueda_buscar_vehiculos",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "placa",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Placa"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaRespuestaBusqueda"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Buscar candidatas por placa completa",
+        "tags": [
+          "vehiculos"
+        ]
+      }
+    },
+    "/api/v1/vehiculos/{placa}/expediente": {
+      "get": {
+        "description": "Devuelve el expediente vigente o error uniforme.\n\nExige `vehiculos.lectura`: 401 sin token, 403 sin ambito, 404 sin\nficha; `vinculos` solo trae lo autorizado.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa exacta consultada.\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 con expediente o error uniforme.",
+        "operationId": "aplicaciones_vehiculos_enrutador_expediente_ver_expediente",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "schema": {
+              "title": "Placa",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaExpediente"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Expediente por placa exacta",
+        "tags": [
+          "vehiculos"
+        ]
+      }
+    },
+    "/api/v1/vehiculos/{placa}/expediente/empresa": {
+      "get": {
+        "description": "Devuelve la empresa vigente o error uniforme.\n\nExige base + `vehiculos.empresa.lectura`: sin ambito no sale ningun\ndato (403 uniforme).\n\nLa extranjera no autorizada se comporta como inexistente: la\nverificacion del expediente ya la filtra antes del subrecurso.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa exacta consultada.\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 con empresa o error uniforme.",
+        "operationId": "aplicaciones_empresa_enrutador_empresa_ver_empresa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "schema": {
+              "title": "Placa",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaEmpresa"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Empresa vigente por placa exacta",
+        "tags": [
+          "empresa"
+        ]
+      }
+    },
+    "/api/v1/vehiculos/{placa}/expediente/generales": {
+      "get": {
+        "description": "Devuelve los generales vigentes o error uniforme.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa exacta consultada.\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 con generales o error uniforme.",
+        "operationId": "aplicaciones_vehiculos_enrutador_expediente_ver_generales",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "schema": {
+              "title": "Placa",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaGenerales"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Generales por placa exacta",
+        "tags": [
+          "vehiculos"
+        ]
+      }
+    },
+    "/api/v1/vehiculos/{placa}/expediente/historial": {
+      "get": {
+        "description": "Devuelve una pagina acotada de periodos o error uniforme.\n\nExige base + `vehiculos.historial.lectura`: sin ambito no sale\nningun dato (403 uniforme). Mismas reglas que refrendos: cursor\ninvalido/manipulado/ajeno y extranjera no autorizada dan el mismo\n404 sin dato. Solo `cursor`.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa exacta consultada.\n    cursor: Token opaco de la pagina anterior (None en la primera).\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 paginada o error uniforme.",
+        "operationId": "aplicaciones_historial_enrutador_historial_ver_historial",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "schema": {
+              "title": "Placa",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaRespuestaHistorial"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Historial paginado con cursor opaco",
+        "tags": [
+          "historial"
+        ]
+      }
+    },
+    "/api/v1/vehiculos/{placa}/expediente/propietario": {
+      "get": {
+        "description": "Devuelve la titularidad vigente o error uniforme.\n\nExige base + `vehiculos.propietario.lectura`: sin ambito no sale\nningun dato (403 uniforme).\n\nLa extranjera no autorizada se comporta como inexistente: la\nverificacion del expediente ya la filtra antes del subrecurso.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa exacta consultada.\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 con propietario o error uniforme.",
+        "operationId": "aplicaciones_propietario_enrutador_propietario_ver_propietario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "schema": {
+              "title": "Placa",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaPropietario"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Propietario vigente por placa exacta",
+        "tags": [
+          "propietario"
+        ]
+      }
+    },
+    "/api/v1/vehiculos/{placa}/expediente/refrendos": {
+      "get": {
+        "description": "Devuelve una pagina acotada de refrendos o error uniforme.\n\nExige base + `vehiculos.refrendos.lectura`: sin ambito no sale\nningun dato (403 uniforme). Cursor invalido, manipulado o de otra\nplaca -> mismo 404 sin dato. Extranjera no autorizada -> mismo 404\n(verifica expediente primero). Sin `page/limit` ni totales: solo\n`cursor` opcional.\n\nArgs:\n    request: Peticion HTTP con codigo de correlacion.\n    placa: Placa exacta consultada.\n    cursor: Token opaco de la pagina anterior (None en la primera).\n\nReturns:\n    Tupla `(estado, cuerpo)` 200 paginada o error uniforme.",
+        "operationId": "aplicaciones_refrendos_enrutador_refrendos_ver_refrendos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "schema": {
+              "title": "Placa",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaRespuestaRefrendos"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsquemaError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Refrendos paginados con cursor opaco",
+        "tags": [
+          "refrendos"
+        ]
+      }
+    }
+  },
+  "servers": []
+}

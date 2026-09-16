@@ -25,7 +25,6 @@ from aplicaciones.vehiculos.esquemas.esquema_busqueda import (
 from aplicaciones.vehiculos.selectores.selector_busqueda import buscar_por_sufijo
 from aplicaciones.vehiculos.servicios.normalizador_placa import normalizar_placa
 from aplicaciones.vehiculos.servicios.resolutor_candidatas import (
-    TOPE_CANDIDATAS,
     extraer_sufijo_y_tipo,
     resolver_por_sufijo_y_tipo,
 )
@@ -79,11 +78,11 @@ def buscar_vehiculos(request: HttpRequest, placa: str | None = None):
     if extraccion is None:
         return 404, construir_error_no_encontrado(codigo)
     sufijo, tipo_letra = extraccion
-    filas = buscar_por_sufijo(sufijo, tipo_letra, TOPE_CANDIDATAS)
+    filas = buscar_por_sufijo(sufijo, tipo_letra)
     if not filas:
         return 404, construir_error_no_encontrado(codigo)
     candidatas, truncado = resolver_por_sufijo_y_tipo(
-        sufijo, tipo_letra, filas, TOPE_CANDIDATAS
+        sufijo, tipo_letra, filas
     )
     if not candidatas:
         return 404, construir_error_no_encontrado(codigo)

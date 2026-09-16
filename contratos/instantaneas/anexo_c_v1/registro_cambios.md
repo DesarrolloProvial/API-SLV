@@ -6,3 +6,4 @@
 # | Fecha | Cambio | Responsable |
 # |-------|--------|-------------|
 # | 2026-09-16 | Base v1 creada (sin recursos aun) | Equipo intercambio |
+# | 2026-09-16 | Instantanea v1 congelada: 7 rutas (`buscar`, `expediente`, `generales`, 4 subrecursos), errores 401/403/404/429 uniformes, `vinculos` con subrecursos opcionales por ambito | PR6 (tarea 3.4) |

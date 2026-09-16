@@ -20,3 +20,9 @@ jobs:
         run: python manage.py check
       - name: Correr pruebas del esqueleto
         run: python manage.py test pruebas
+      - name: Verificar contrato aditivo (Anexo C)
+        run: python manage.py test pruebas.contrato pruebas.unidad
+      - name: Regenerar OpenAPI y comparar contra instantanea
+        run: |
+          python contratos/generar_instantanea.py --salida /tmp/openapi_actual.json
+          python contratos/verificar_aditividad.py contratos/instantaneas/anexo_c_v1/openapi_v1.json /tmp/openapi_actual.json

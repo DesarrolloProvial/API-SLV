@@ -18,17 +18,22 @@ COLUMNAS_CANDIDATA = (
 )
 
 
-def buscar_por_sufijo(sufijo: str, tipo_letra: str, tope: int) -> list[dict]:
+def buscar_por_sufijo(
+    sufijo: str, tipo_letra: str, tope: int | None = None
+) -> list[dict]:
     """Busca candidatas activas por sufijo6 mas primera letra.
 
     Args:
         sufijo: Ultimos 6 ya validados (`[0-9]{3}[A-Z]{3}`).
         tipo_letra: Primera letra consultada (un tipo nunca ve otro).
-        tope: Maximo convenido; se trae uno extra para el `truncado`.
+        tope: Maximo convenido (None = central `TOPE_CANDIDATAS`).
 
     Returns:
         list[dict]: Hasta `tope + 1` filas ordenadas como contrato.
     """
+    from aplicaciones.vehiculos.servicios.resolutor_candidatas import tope_vigente
+
+    tope = tope_vigente(tope)
     consulta = VistaBusqueda.objects.using(alias_lectura()).filter(
         placa_sufijo6=sufijo,
         placa_norma__startswith=tipo_letra,
