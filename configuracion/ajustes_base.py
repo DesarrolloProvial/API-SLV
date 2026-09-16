@@ -32,7 +32,14 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "aplicaciones.auditoria.propagador_correlacion.MiddlewareCodigoCorrelacion",
 ]
+
+#: Alias de lectura del espejo (el `default` apunta al espejo en produccion).
+ALIAS_ESPEJO = os.getenv("ALIAS_ESPEJO", "default")
+
+#: Placas extranjeras solo si el convenio las autoriza (spec consulta).
+PERMITIR_PLACAS_EXTRANJERAS = os.getenv("PERMITIR_PLACAS_EXTRANJERAS", "") == "1"
 
 ROOT_URLCONF = "configuracion.enrutado_principal"
 

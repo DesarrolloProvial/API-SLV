@@ -1,0 +1,63 @@
+"""Enrutador de busqueda: GET buscar (delgado, tarea 3.1)."""
+from django.http import HttpRequest
+from ninja import Router
+
+from aplicaciones.auditoria.propagador_correlacion import obtener_codigo
+from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_no_encontrado,
+)
+from aplicaciones.vehiculos.esquemas.esquema_busqueda import (
+    EsquemaError,
+    EsquemaRespuestaBusqueda,
+)
+from aplicaciones.vehiculos.selectores.selector_busqueda import buscar_por_sufijo
+from aplicaciones.vehiculos.servicios.normalizador_placa import normalizar_placa
+from aplicaciones.vehiculos.servicios.resolutor_candidatas import (
+    TOPE_CANDIDATAS,
+    extraer_sufijo_y_tipo,
+    resolver_por_sufijo_y_tipo,
+)
+
+# Nota: el primer parametro se llama `request` por exigencia de Ninja
+# (solo omite del esquema el parametro con ese nombre literal).
+
+
+enrutador = Router()
+
+
+@enrutador.get(
+    "/buscar",
+    response={200: EsquemaRespuestaBusqueda, 404: EsquemaError},
+    tags=["vehiculos"],
+    summary="Buscar candidatas por placa completa",
+)
+def buscar_vehiculos(request: HttpRequest, placa: str | None = None):
+    """Busca por placa completa; 404 uniforme si no resuelve.
+
+    Args:
+        request: Peticion HTTP con codigo de correlacion.
+        placa: Placa completa del consumidor (unica via).
+
+    Returns:
+        Tupla `(estado, cuerpo)` 200 con candidatas o 404 uniforme.
+    """
+    codigo = obtener_codigo(request)
+    norma = normalizar_placa(placa)
+    extraccion = extraer_sufijo_y_tipo(norma)
+    if extraccion is None:
+        return 404, construir_error_no_encontrado(codigo)
+    sufijo, tipo_letra = extraccion
+    filas = buscar_por_sufijo(sufijo, tipo_letra, TOPE_CANDIDATAS)
+    if not filas:
+        return 404, construir_error_no_encontrado(codigo)
+    candidatas, truncado = resolver_por_sufijo_y_tipo(
+        sufijo, tipo_letra, filas, TOPE_CANDIDATAS
+    )
+    if not candidatas:
+        return 404, construir_error_no_encontrado(codigo)
+    return 200, {
+        "codigo_correlacion": codigo,
+        "placa": norma,
+        "candidatas": candidatas,
+        "truncado": truncado,
+    }
