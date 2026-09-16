@@ -1,7 +1,15 @@
-# Reglas de alerta del espejo (definición día 0).
+# Reglas de alerta del espejo y del API (definición día 0).
 # Umbrales con "<por calibrar>": valores de partida internos a acordar en
 # convenio tras el piloto; nada aquí es compromiso externo.
-# Promoción a Prometheus/Alertmanager con el exportador verificado: PR6.
+# Scrape del API (Prometheus central si la red dedicada lo permite; si no,
+# pila minima propia). `job intercambio-api` contra el endpoint interno:
+# - job_name: intercambio-api
+#   metrics_path: /metricas
+#   static_configs:
+#     - targets: ["api:8000"]
+#       labels: {service: "intercambio-api"}
+# El `codigo_correlacion` NUNCA es etiqueta (cardinalidad): las alertas de
+# barrido agregan por `cliente` y el caso se reconstruye en Loki por codigo.
 version: 1
 alertas:
   - nombre: RezagoSlotIntercambioAlto
@@ -34,3 +42,52 @@ alertas:
       worker en el registro del espejo; conteos espejo contra primario.
     umbral: "inmediato tras terminar el snapshot inicial"
     accion: "despliegue/manual_resincronizacion.md §3 (resincronización selectiva)"
+
+alertas_api:
+  - nombre: Errores5xxSostenidos
+    severidad: critica
+    senal: >
+      sum(rate(intercambio_peticiones_total{estado=~"5.."}[5m])) > 0
+      durante 10 minutos.
+    umbral: "<por calibrar: tolerancia de 5xx esporadicos en piloto>"
+    accion: "Revisar registros por codigo_correlacion y tablero por recurso."
+
+  - nombre: LatenciaP95Alta
+    severidad: alta
+    senal: >
+      histogram_quantile(0.95,
+      sum(rate(intercambio_latencia_segundos_bucket[5m])) by (recurso, le))
+      > 1 segundo por recurso.
+    umbral: "<por calibrar en piloto: p95 objetivo por recurso>"
+    accion: "Perfilado de selectores e indices del espejo."
+
+  - nombre: VolumenInusualPorCliente
+    severidad: alta
+    senal: >
+      sum by (cliente) (rate(intercambio_peticiones_total[15m])) muy por
+      encima de la linea base del convenio.
+    umbral: "<por calibrar en piloto: multiplo de la linea base>"
+    accion: "Asociar codigos en Loki y revisar cuotas del convenio."
+
+  - nombre: PosibleBarridoAntiScraping
+    severidad: alta
+    senal: >
+      Loki: count by (cliente)
+      (count_over_time({origen="intercambio.consulta"} | json
+      | recurso="buscar" [1h])) fuera de horario o sobre el umbral.
+    umbral: "<por calibrar en piloto: codigos distintos por cliente/hora>"
+    accion: "Alertar posible scraping; caso asociado a sus codigos."
+
+  - nombre: ErroresBDLector
+    severidad: critica
+    senal: "increase(intercambio_errores_bd_total[10m]) > 0."
+    umbral: "inmediato (el lector solo hace SELECT en vistas)"
+    accion: "Salud del espejo y concesiones del rol lector."
+
+  - nombre: CuotasExcedidasEnAlza
+    severidad: media
+    senal: >
+      sum(rate(intercambio_limites_total[15m])) con alzas sostenidas por
+      recurso.
+    umbral: "<por calibrar: distinguir abuso de tope mal calibrado>"
+    accion: "Revisar si es abuso (endurecer) o convenio (recalibrar topes)."
