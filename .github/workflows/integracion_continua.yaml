@@ -1,0 +1,22 @@
+name: integracion-continua
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Instalar dependencias
+        run: pip install -e .
+      - name: Revisar ajustes Django
+        run: python manage.py check
+      - name: Correr pruebas del esqueleto
+        run: python manage.py test pruebas
