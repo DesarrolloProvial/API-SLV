@@ -58,7 +58,7 @@ def resolver_por_sufijo_y_tipo(
     Args:
         sufijo: Ultimos 6 ya validados (trazabilidad, no se re-deriva).
         tipo_letra: Primera letra consultada; filtra en defensa propia.
-        filas: Filas ya ordenadas (`activa DESC, placa_norma ASC`).
+        filas: Filas ya ordenadas (`placa_norma ASC`).
         tope: Maximo de candidatas (None = central `TOPE_CANDIDATAS`).
 
     Returns:

@@ -22,9 +22,13 @@ from aplicaciones.vehiculos.esquemas.esquema_busqueda import (
     EsquemaError,
     EsquemaRespuestaBusqueda,
 )
-from aplicaciones.vehiculos.selectores.selector_busqueda import buscar_por_sufijo
+from aplicaciones.vehiculos.selectores.selector_busqueda import (
+    buscar_por_sufijo,
+    obtener_extranjera_exacta,
+)
 from aplicaciones.vehiculos.servicios.normalizador_placa import normalizar_placa
 from aplicaciones.vehiculos.servicios.resolutor_candidatas import (
+    armar_candidata,
     extraer_sufijo_y_tipo,
     resolver_por_sufijo_y_tipo,
 )
@@ -54,6 +58,11 @@ def buscar_vehiculos(request: HttpRequest, placa: str | None = None):
     Exige `vehiculos.lectura`: sin token -> 401, sin ambito -> 403,
     ambos uniformes y sin dato.
 
+    Extranjeras (spec consulta): solo por igualdad exacta de placa
+    completa y solo con convenio (`PERMITIR_PLACAS_EXTRANJERAS=1`).
+    El sufijo nunca devuelve extranjeras; la exacta autorizada
+    responde 200 con una sola candidata (`truncado=False`).
+
     Args:
         request: Peticion HTTP con codigo de correlacion.
         placa: Placa completa del consumidor (unica via).
@@ -74,6 +83,15 @@ def buscar_vehiculos(request: HttpRequest, placa: str | None = None):
         request.limite_reintento_en = excedido.reintentar_en
         return 429, construir_error_limite_excedido(codigo)
     norma = normalizar_placa(placa)
+    extranjera = obtener_extranjera_exacta(norma)
+    if extranjera is not None:
+        request.candidatas_observadas = 1
+        return 200, {
+            "codigo_correlacion": codigo,
+            "placa": norma,
+            "candidatas": [armar_candidata(extranjera)],
+            "truncado": False,
+        }
     extraccion = extraer_sufijo_y_tipo(norma)
     if extraccion is None:
         return 404, construir_error_no_encontrado(codigo)
