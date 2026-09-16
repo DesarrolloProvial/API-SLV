@@ -1,8 +1,22 @@
 """Ajustes de produccion (endurecido tras el tunel)."""
+from django.core.exceptions import ImproperlyConfigured
+
 from .ajustes_base import *  # noqa: F401,F403
 
 DEPURAR = False
 DEBUG = False
+
+if LLAVE_SECRETA in (  # noqa: F405
+    "",
+    "insegura-solo-desarrollo-cambiar-en-produccion",
+):
+    raise ImproperlyConfigured(
+        "LLAVE_SECRETA insegura en produccion: defina el secreto por entorno."
+    )
+if not BASES_DATOS_CLAVE:  # noqa: F405
+    raise ImproperlyConfigured(
+        "CLAVE_BD vacia en produccion: defina la clave del lector."
+    )
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True

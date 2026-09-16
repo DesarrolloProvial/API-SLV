@@ -4,6 +4,10 @@ Lee solo `intercambio.vista_empresa`. Columnas tomadas de
 `base_de_datos/vistas/vista_empresa_v1.sql`; no inventar columnas.
 Puede traer varias filas por placa (periodos); el selector toma la
 vigente (`activa` primero). `placa_norma` es solo llave de mapeo ORM.
+
+Diferimiento documentado (compuerta PR5): ver `propietario/modelos.py`
+(`.values()` sin identidad ORM; `CompositePrimaryKey` solo si se
+instanciaran modelos).
 """
 from django.db import models
 

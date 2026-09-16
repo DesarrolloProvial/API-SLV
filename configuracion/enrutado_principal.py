@@ -39,7 +39,13 @@ def vista_salud(peticion):
     return JsonResponse({"estado": "correcto"})
 
 
-api = NinjaAPI(title="Intercambio de vehiculos", version="1.0.0")
+api = NinjaAPI(
+    title="Intercambio de vehiculos",
+    version="1.0.0",
+    # Seco: el borde solo expone `GET /api/v1/vehiculos/*`; la UI
+    # interactiva no sale a internet (se consulta `openapi.json`).
+    docs_url=None,
+)
 api.add_router("/v1/vehiculos", enrutador_busqueda)
 api.add_router("/v1/vehiculos", enrutador_expediente)
 api.add_router("/v1/vehiculos", enrutador_propietario)

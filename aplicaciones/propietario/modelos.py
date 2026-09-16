@@ -4,6 +4,11 @@ Lee solo `intercambio.vista_propietario`. Columnas tomadas de
 `base_de_datos/vistas/vista_propietario_v1.sql`; no inventar columnas.
 La vista puede traer varias filas por placa (historial de titularidad);
 el selector toma la vigente. `placa_norma` es solo llave de mapeo ORM.
+
+Diferimiento documentado (compuerta PR5): `CompositePrimaryKey` no se
+adopta porque los selectores usan `.values()` (diccionarios, sin
+identidad ORM que colisione); el `pk` simple es inocuo hoy. Si algun
+selector llegara a instanciar modelos, revaluar llave compuesta.
 """
 from django.db import models
 

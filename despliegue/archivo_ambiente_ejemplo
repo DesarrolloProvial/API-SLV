@@ -20,3 +20,18 @@ URL_ESPEJO_PRUEBAS=
 # Comportamiento de consulta (runtime del API).
 ALIAS_ESPEJO=
 PERMITIR_PLACAS_EXTRANJERAS=
+# Topes de dia 0 (calibrables por convenio).
+TOPE_CANDIDATAS=
+TOPE_REFERENDOS=
+TOPE_HISTORIAL=
+# Keycloak/JWKS (solo nombres; vigencia corta en el IdP).
+URL_JWKS=
+EMISOR_JWT=
+AUDIENCIA_JWT=
+TOLERANCIA_RELOJ_SEG=
+TIEMPO_CACHE_JWKS_SEG=
+TOKENS_REVOCADOS=
+# Limites lado API (dia 0, a calibrar; el borde lleva los suyos).
+LIMITE_BUSCAR_TOPE=
+LIMITE_RECURSO_TOPE=
+VENTANA_LIMITE_SEG=

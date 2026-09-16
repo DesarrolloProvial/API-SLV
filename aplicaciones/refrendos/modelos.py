@@ -4,6 +4,10 @@ Lee solo `intercambio.vista_refrendos`. Columnas tomadas de
 `base_de_datos/vistas/vista_refrendos_v1.sql`; no inventar columnas.
 Varias filas por placa; el selector pagina con orden determinista.
 `placa_norma` es solo llave de mapeo ORM.
+
+Diferimiento documentado (compuerta PR5): ver `propietario/modelos.py`
+(`.values()` sin identidad ORM; `CompositePrimaryKey` solo si se
+instanciaran modelos).
 """
 from django.db import models
 

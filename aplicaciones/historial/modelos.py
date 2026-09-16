@@ -4,6 +4,10 @@ Lee solo `intercambio.vista_historial`. Columnas tomadas de
 `base_de_datos/vistas/vista_historial_v1.sql`; no inventar columnas.
 Varias filas por placa (periodos vigentes y dados de baja); el selector
 pagina con orden determinista. `placa_norma` es solo llave de mapeo ORM.
+
+Diferimiento documentado (compuerta PR5): ver `propietario/modelos.py`
+(`.values()` sin identidad ORM; `CompositePrimaryKey` solo si se
+instanciaran modelos).
 """
 from django.db import models
 
