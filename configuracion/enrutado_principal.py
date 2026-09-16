@@ -10,8 +10,14 @@ from aplicaciones.seguridad.errores_uniformes import (
 from aplicaciones.empresa.enrutador_empresa import (
     enrutador as enrutador_empresa,
 )
+from aplicaciones.historial.enrutador_historial import (
+    enrutador as enrutador_historial,
+)
 from aplicaciones.propietario.enrutador_propietario import (
     enrutador as enrutador_propietario,
+)
+from aplicaciones.refrendos.enrutador_refrendos import (
+    enrutador as enrutador_refrendos,
 )
 from aplicaciones.vehiculos.enrutador_busqueda import (
     enrutador as enrutador_busqueda,
@@ -38,6 +44,8 @@ api.add_router("/v1/vehiculos", enrutador_busqueda)
 api.add_router("/v1/vehiculos", enrutador_expediente)
 api.add_router("/v1/vehiculos", enrutador_propietario)
 api.add_router("/v1/vehiculos", enrutador_empresa)
+api.add_router("/v1/vehiculos", enrutador_refrendos)
+api.add_router("/v1/vehiculos", enrutador_historial)
 
 
 def vista_no_encontrada(peticion, exception=None):

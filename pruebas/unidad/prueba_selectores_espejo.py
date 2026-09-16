@@ -12,9 +12,11 @@ from django.conf import settings
 from django.db import connections
 
 from aplicaciones.empresa.selectores.selector_empresa import obtener_empresa
+from aplicaciones.historial.selectores.selector_historial import listar_historial
 from aplicaciones.propietario.selectores.selector_propietario import (
     obtener_propietario,
 )
+from aplicaciones.refrendos.selectores.selector_refrendos import listar_refrendos
 from aplicaciones.vehiculos.selectores.selector_busqueda import buscar_por_sufijo
 from aplicaciones.vehiculos.selectores.selector_expediente import (
     obtener_por_placa_exacta,
@@ -174,3 +176,11 @@ class PruebaSelectoresEspejo(unittest.TestCase):
     def test_empresa_inexistente_devuelve_none(self):
         """Una placa ausente ejecuta y devuelve None (luego 404)."""
         self.assertIsNone(obtener_empresa("ZZZ000000"))
+
+    def test_refrendos_inexistentes_devuelven_vacio(self):
+        """Un placa ausente ejecuta y devuelve lista vacia."""
+        self.assertEqual(listar_refrendos("ZZZ000000", 0, 11), [])
+
+    def test_historial_inexistente_devuelve_vacio(self):
+        """Un placa ausente ejecuta y devuelve lista vacia."""
+        self.assertEqual(listar_historial("ZZZ000000", 0, 11), [])
