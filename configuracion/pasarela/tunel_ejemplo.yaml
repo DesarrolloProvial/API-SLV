@@ -1,0 +1,11 @@
+# Ejemplo de tunel Cloudflare (sin puertos entrantes publicos).
+# Copiar como base operativa; el identificador real va por gestor externo.
+tunel: ${TUNEL_ID}
+credenciales-archivo: /etc/cloudflared/credenciales.json
+
+origen:
+  # Hostname dedicado (confirmar en fase 0).
+  - nombre-host: intercambio.provial.gob.gt
+    servicio: http://nginx:80
+  # Todo lo demas se rechaza en el borde.
+  - servicio: http_status:404
