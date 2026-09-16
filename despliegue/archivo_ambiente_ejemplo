@@ -1,0 +1,8 @@
+# Ejemplo de ambiente: SOLO nombres, sin valores ni secretos.
+LLAVE_SECRETA=
+ANFITRIONES_PERMITIDOS=
+NOMBRE_BD=
+USUARIO_BD=
+CLAVE_BD=
+ANFITRION_BD=
+PUERTO_BD=

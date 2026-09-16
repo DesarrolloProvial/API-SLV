@@ -1,0 +1,17 @@
+# Contenedor multietapa, usuario sin privilegios, solo lectura
+FROM python:3.14-slim AS constructor
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY configuracion ./configuracion
+RUN pip install --no-cache-dir .
+
+FROM python:3.14-slim AS final
+WORKDIR /app
+# Usuario sin privilegios
+RUN useradd --create-home --uid 10001 servicio && \
+    mkdir -p /app && chown servicio:servicio /app
+COPY --from=constructor /usr/local /usr/local
+COPY --chown=servicio:servicio . .
+USER servicio
+EXPOSE 8000
+CMD ["gunicorn", "configuracion.wsgi:aplicacion", "--bind", "0.0.0.0:8000"]
