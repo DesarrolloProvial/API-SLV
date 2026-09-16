@@ -17,6 +17,10 @@ if not BASES_DATOS_CLAVE:  # noqa: F405
     raise ImproperlyConfigured(
         "CLAVE_BD vacia en produccion: defina la clave del lector."
     )
+if not URL_JWKS:  # noqa: F405
+    raise ImproperlyConfigured(
+        "URL_JWKS vacia en produccion: sin JWKS la API caeria a HS256 local."
+    )
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
