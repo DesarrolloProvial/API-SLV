@@ -17,7 +17,6 @@ from aplicaciones.auditoria.registrador_consulta import (
     recurso_desde_ruta,
     registrar_consulta,
 )
-import uuid
 
 
 def generar_codigo_correlacion() -> str:
