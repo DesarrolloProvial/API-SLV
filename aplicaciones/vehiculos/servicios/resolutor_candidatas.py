@@ -1,0 +1,73 @@
+"""Resolucion interna por sufijo mas filtro por tipo (PLAN 10/25).
+
+El consumidor envia la placa completa; aqui se deriva el sufijo (ultimos
+6, patron `[0-9]{3}[A-Z]{3}`) y el tipo (primera letra). Solo las
+variantes del mismo tipo llegan a candidatas; un tipo distinto jamas
+aparece. Sin conteos: `truncado` solo indica si hubo mas alla del tope.
+"""
+import re
+from typing import Final
+
+PATRON_SUFIJO: Final = re.compile(r"[0-9]{3}[A-Z]{3}$")
+
+#: Tope convenido de dia 0; se calibra en el convenio (ver 3.4).
+TOPE_CANDIDATAS: Final[int] = 10
+
+
+def extraer_sufijo_y_tipo(placa_norma: str) -> tuple[str, str] | None:
+    """Deriva (sufijo, tipo) o devuelve None si no hay sufijo valido.
+
+    Args:
+        placa_norma: Placa ya normalizada.
+
+    Returns:
+        Tupla `(sufijo6, primera_letra)` o None ante formato no resoluble.
+    """
+    if not placa_norma or len(placa_norma) < 6:
+        return None
+    sufijo = placa_norma[-6:]
+    if not PATRON_SUFIJO.match(sufijo):
+        return None
+    return sufijo, placa_norma[0]
+
+
+def resolver_por_sufijo_y_tipo(
+    sufijo: str,
+    tipo_letra: str,
+    filas: list[dict],
+    tope: int = TOPE_CANDIDATAS,
+) -> tuple[list[dict], bool]:
+    """Convierte filas del selector en candidatas del mismo tipo.
+
+    Args:
+        sufijo: Ultimos 6 ya validados (trazabilidad, no se re-deriva).
+        tipo_letra: Primera letra consultada; filtra en defensa propia.
+        filas: Filas ya ordenadas (`activa DESC, placa_norma ASC`).
+        tope: Maximo de candidatas a devolver.
+
+    Returns:
+        Tupla `(candidatas, truncado)`; `truncado` es True si hubo mas.
+    """
+    _ = sufijo
+    propias = [f for f in filas if (f.get("placa_norma") or "").startswith(tipo_letra)]
+    return [armar_candidata(f) for f in propias[:tope]], len(propias) > tope
+
+
+def armar_candidata(fila: dict) -> dict:
+    """Arma la ficha minima de una candidata con su vinculo.
+
+    Args:
+        fila: Fila del selector de busqueda.
+
+    Returns:
+        dict: Candidata con `vinculos.expediente` para desambiguar.
+    """
+    placa = fila.get("placa_norma") or fila.get("placa") or ""
+    return {
+        "placa": fila.get("placa") or placa,
+        "marca": fila.get("marca"),
+        "linea": fila.get("linea"),
+        "modelo": fila.get("modelo"),
+        "empresa_implementadora": fila.get("empresa_implementadora"),
+        "vinculos": {"expediente": f"/api/v1/vehiculos/{placa}/expediente"},
+    }
