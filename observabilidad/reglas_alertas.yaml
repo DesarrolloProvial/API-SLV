@@ -1,0 +1,36 @@
+# Reglas de alerta del espejo (definición día 0).
+# Umbrales con "<por calibrar>": valores de partida internos a acordar en
+# convenio tras el piloto; nada aquí es compromiso externo.
+# Promoción a Prometheus/Alertmanager con el exportador verificado: PR6.
+version: 1
+alertas:
+  - nombre: RezagoSlotIntercambioAlto
+    severidad: critica
+    senal: >
+      Primario: pg_replication_slots (slot_name = SLOT_INTERCAMBIO);
+      rezago en bytes = pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)
+      y antigüedad del slot. Espejo: pg_stat_subscription (status, latest_end_lsn).
+    umbral: "<por calibrar en piloto: rezago máximo aceptado en minutos>"
+    accion: "despliegue/manual_resincronizacion.md §3 (purga o resincronización)"
+
+  - nombre: RetencionWALSlotAlta
+    severidad: critica
+    senal: >
+      Tamaño retenido por el slot frente a max_slot_wal_keep_size
+      (riesgo de disco del primario si el suscriptor cae).
+    umbral: "<por calibrar: avisar al 70 % de max_slot_wal_keep_size>"
+    accion: "despliegue/manual_resincronizacion.md §3 (purga o resincronización)"
+
+  - nombre: SuscripcionIntercambioCaida
+    severidad: critica
+    senal: "pg_stat_subscription: subenabled falso o sin workers activos."
+    umbral: "inmediato (más de 5 minutos caída)"
+    accion: "despliegue/manual_resincronizacion.md §5 y §6 (anti-drift)"
+
+  - nombre: TablasFueraDeReplica
+    severidad: alta
+    senal: >
+      pg_subscription_rel con srsubstate distinto de 'r' (lista) o errores del
+      worker en el registro del espejo; conteos espejo contra primario.
+    umbral: "inmediato tras terminar el snapshot inicial"
+    accion: "despliegue/manual_resincronizacion.md §3 (resincronización selectiva)"
