@@ -9,6 +9,11 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from pruebas.ayuda_autenticacion import (
+    TODOS_LOS_AMBITOS,
+    cabecera_autorizacion,
+)
+
 from aplicaciones.seguridad.cursor_opaco import emitir_cursor
 
 EXPEDIENTE = {"placa_norma": "C123ABC", "placa": "C123ABC"}
@@ -75,7 +80,7 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
             return_value=None,
         ):
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C123ABC/expediente/refrendos")
+                self.client.get("/api/v1/vehiculos/C123ABC/expediente/refrendos", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
             )
 
     def test_refrendos_con_cursor_manipulado_da_404(self):
@@ -86,13 +91,15 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
         ):
             self._verificar_404(
                 self.client.get(
-                    "/api/v1/vehiculos/C123ABC/expediente/refrendos?cursor=roto"
+                    "/api/v1/vehiculos/C123ABC/expediente/refrendos?cursor=roto",
+                    **cabecera_autorizacion(TODOS_LOS_AMBITOS),
                 )
             )
             ajeno = emitir_cursor("P999ZZZ", 10)
             self._verificar_404(
                 self.client.get(
-                    f"/api/v1/vehiculos/C123ABC/expediente/refrendos?cursor={ajeno}"
+                    f"/api/v1/vehiculos/C123ABC/expediente/refrendos?cursor={ajeno}",
+                    **cabecera_autorizacion(TODOS_LOS_AMBITOS),
                 )
             )
 
@@ -107,7 +114,7 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
     def test_refrendos_ultima_pagina_sin_siguiente(self, _pag, _exp):
         """Pagina final trae elementos y `cursor_siguiente` nulo."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente/refrendos")
+            self.client.get("/api/v1/vehiculos/C123ABC/expediente/refrendos", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
         )
         self.assertEqual(len(cuerpo["refrendos"]), 1)
         self.assertIsNone(cuerpo["cursor_siguiente"])
@@ -139,7 +146,7 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
     def test_refrendos_enrutador_expone_siguiente(self, _pag, _exp):
         """El enrutador expone el cursor siguiente sin totales."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente/refrendos")
+            self.client.get("/api/v1/vehiculos/C123ABC/expediente/refrendos", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
         )
         self.assertEqual(cuerpo["cursor_siguiente"], "opaco-siguiente")
         self.assertNotIn("total", str(cuerpo).lower())
@@ -151,7 +158,7 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
             return_value=None,
         ):
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C123ABC/expediente/historial")
+                self.client.get("/api/v1/vehiculos/C123ABC/expediente/historial", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
             )
 
     def test_historial_con_cursor_manipulado_da_404(self):
@@ -162,13 +169,15 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
         ):
             self._verificar_404(
                 self.client.get(
-                    "/api/v1/vehiculos/C123ABC/expediente/historial?cursor=roto"
+                    "/api/v1/vehiculos/C123ABC/expediente/historial?cursor=roto",
+                    **cabecera_autorizacion(TODOS_LOS_AMBITOS),
                 )
             )
             ajeno = emitir_cursor("P999ZZZ", 10)
             self._verificar_404(
                 self.client.get(
-                    f"/api/v1/vehiculos/C123ABC/expediente/historial?cursor={ajeno}"
+                    f"/api/v1/vehiculos/C123ABC/expediente/historial?cursor={ajeno}",
+                    **cabecera_autorizacion(TODOS_LOS_AMBITOS),
                 )
             )
 
@@ -183,7 +192,7 @@ class PruebaSubrecursosPaginados(SimpleTestCase):
     def test_historial_con_siguiente_opaco(self, _pag, _exp):
         """Pagina intermedia trae elementos y cursor sin totales."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente/historial")
+            self.client.get("/api/v1/vehiculos/C123ABC/expediente/historial", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
         )
         self.assertEqual(len(cuerpo["historial"]), 1)
         self.assertEqual(cuerpo["cursor_siguiente"], "siguiente-opaco")

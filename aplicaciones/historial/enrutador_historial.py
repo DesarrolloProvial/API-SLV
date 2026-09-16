@@ -10,7 +10,14 @@ from aplicaciones.historial.servicios.servicio_historial import (
 )
 from aplicaciones.seguridad.cursor_opaco import CursorInvalido
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_no_autenticado,
     construir_error_no_encontrado,
+    construir_error_sin_permiso,
+)
+from aplicaciones.seguridad.validador_jwks import TokenInvalido
+from aplicaciones.seguridad.verificador_ambitos import (
+    PermisoDenegado,
+    autenticar_y_autorizar,
 )
 from aplicaciones.vehiculos.esquemas.esquema_busqueda import EsquemaError
 from aplicaciones.vehiculos.selectores.selector_expediente import (
@@ -25,15 +32,22 @@ enrutador = Router()
 
 @enrutador.get(
     "/{placa}/expediente/historial",
-    response={200: EsquemaRespuestaHistorial, 404: EsquemaError},
+    response={
+        200: EsquemaRespuestaHistorial,
+        401: EsquemaError,
+        403: EsquemaError,
+        404: EsquemaError,
+    },
     tags=["historial"],
     summary="Historial paginado con cursor opaco",
 )
 def ver_historial(request: HttpRequest, placa: str, cursor: str | None = None):
-    """Devuelve una pagina acotada de periodos o 404 uniforme.
+    """Devuelve una pagina acotada de periodos o error uniforme.
 
-    Mismas reglas que refrendos: cursor invalido/manipulado/ajeno y
-    extranjera no autorizada dan el mismo 404 sin dato. Solo `cursor`.
+    Exige base + `vehiculos.historial.lectura`: sin ambito no sale
+    ningun dato (403 uniforme). Mismas reglas que refrendos: cursor
+    invalido/manipulado/ajeno y extranjera no autorizada dan el mismo
+    404 sin dato. Solo `cursor`.
 
     Args:
         request: Peticion HTTP con codigo de correlacion.
@@ -41,9 +55,15 @@ def ver_historial(request: HttpRequest, placa: str, cursor: str | None = None):
         cursor: Token opaco de la pagina anterior (None en la primera).
 
     Returns:
-        Tupla `(estado, cuerpo)` 200 paginada o 404 uniforme.
+        Tupla `(estado, cuerpo)` 200 paginada o error uniforme.
     """
     codigo = obtener_codigo(request)
+    try:
+        _, ambitos = autenticar_y_autorizar(request, "historial")
+    except TokenInvalido:
+        return 401, construir_error_no_autenticado(codigo)
+    except PermisoDenegado:
+        return 403, construir_error_sin_permiso(codigo)
     norma = normalizar_placa(placa)
     if not norma:
         return 404, construir_error_no_encontrado(codigo)
@@ -59,5 +79,5 @@ def ver_historial(request: HttpRequest, placa: str, cursor: str | None = None):
         elementos,
         siguiente,
         codigo,
-        construir_vinculos(norma),
+        construir_vinculos(norma, ambitos),
     )

@@ -52,14 +52,14 @@ class EsquemaRefrendoVigente(Schema):
 
 
 class EsquemaVinculos(Schema):
-    """Lo implementado hasta 3.3 (el candado por ambitos llega en 3.4)."""
+    """Lo autorizado del token (3.4): base siempre, subrecursos opcionales."""
 
     expediente: str
     generales: str
-    propietario: str
-    empresa: str
-    refrendos: str
-    historial: str
+    propietario: str | None = None
+    empresa: str | None = None
+    refrendos: str | None = None
+    historial: str | None = None
 
 
 class EsquemaExpediente(Schema):

@@ -4,7 +4,14 @@ from ninja import Router
 
 from aplicaciones.auditoria.propagador_correlacion import obtener_codigo
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_no_autenticado,
     construir_error_no_encontrado,
+    construir_error_sin_permiso,
+)
+from aplicaciones.seguridad.validador_jwks import TokenInvalido
+from aplicaciones.seguridad.verificador_ambitos import (
+    PermisoDenegado,
+    autenticar_y_autorizar,
 )
 from aplicaciones.vehiculos.esquemas.esquema_busqueda import (
     EsquemaError,
@@ -27,21 +34,35 @@ enrutador = Router()
 
 @enrutador.get(
     "/buscar",
-    response={200: EsquemaRespuestaBusqueda, 404: EsquemaError},
+    response={
+        200: EsquemaRespuestaBusqueda,
+        401: EsquemaError,
+        403: EsquemaError,
+        404: EsquemaError,
+    },
     tags=["vehiculos"],
     summary="Buscar candidatas por placa completa",
 )
 def buscar_vehiculos(request: HttpRequest, placa: str | None = None):
     """Busca por placa completa; 404 uniforme si no resuelve.
 
+    Exige `vehiculos.lectura`: sin token -> 401, sin ambito -> 403,
+    ambos uniformes y sin dato.
+
     Args:
         request: Peticion HTTP con codigo de correlacion.
         placa: Placa completa del consumidor (unica via).
 
     Returns:
-        Tupla `(estado, cuerpo)` 200 con candidatas o 404 uniforme.
+        Tupla `(estado, cuerpo)` 200 con candidatas o error uniforme.
     """
     codigo = obtener_codigo(request)
+    try:
+        _, _ambitos = autenticar_y_autorizar(request, "buscar")
+    except TokenInvalido:
+        return 401, construir_error_no_autenticado(codigo)
+    except PermisoDenegado:
+        return 403, construir_error_sin_permiso(codigo)
     norma = normalizar_placa(placa)
     extraccion = extraer_sufijo_y_tipo(norma)
     if extraccion is None:

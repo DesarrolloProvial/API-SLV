@@ -10,7 +10,14 @@ from aplicaciones.refrendos.servicios.servicio_refrendos import (
 )
 from aplicaciones.seguridad.cursor_opaco import CursorInvalido
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_no_autenticado,
     construir_error_no_encontrado,
+    construir_error_sin_permiso,
+)
+from aplicaciones.seguridad.validador_jwks import TokenInvalido
+from aplicaciones.seguridad.verificador_ambitos import (
+    PermisoDenegado,
+    autenticar_y_autorizar,
 )
 from aplicaciones.vehiculos.esquemas.esquema_busqueda import EsquemaError
 from aplicaciones.vehiculos.selectores.selector_expediente import (
@@ -25,16 +32,23 @@ enrutador = Router()
 
 @enrutador.get(
     "/{placa}/expediente/refrendos",
-    response={200: EsquemaRespuestaRefrendos, 404: EsquemaError},
+    response={
+        200: EsquemaRespuestaRefrendos,
+        401: EsquemaError,
+        403: EsquemaError,
+        404: EsquemaError,
+    },
     tags=["refrendos"],
     summary="Refrendos paginados con cursor opaco",
 )
 def ver_refrendos(request: HttpRequest, placa: str, cursor: str | None = None):
-    """Devuelve una pagina acotada de refrendos o 404 uniforme.
+    """Devuelve una pagina acotada de refrendos o error uniforme.
 
-    Cursor invalido, manipulado o de otra placa -> mismo 404 sin dato.
-    Extranjera no autorizada -> mismo 404 (verifica expediente primero).
-    Sin `page/limit` ni totales: solo `cursor` opcional.
+    Exige base + `vehiculos.refrendos.lectura`: sin ambito no sale
+    ningun dato (403 uniforme). Cursor invalido, manipulado o de otra
+    placa -> mismo 404 sin dato. Extranjera no autorizada -> mismo 404
+    (verifica expediente primero). Sin `page/limit` ni totales: solo
+    `cursor` opcional.
 
     Args:
         request: Peticion HTTP con codigo de correlacion.
@@ -42,9 +56,15 @@ def ver_refrendos(request: HttpRequest, placa: str, cursor: str | None = None):
         cursor: Token opaco de la pagina anterior (None en la primera).
 
     Returns:
-        Tupla `(estado, cuerpo)` 200 paginada o 404 uniforme.
+        Tupla `(estado, cuerpo)` 200 paginada o error uniforme.
     """
     codigo = obtener_codigo(request)
+    try:
+        _, ambitos = autenticar_y_autorizar(request, "refrendos")
+    except TokenInvalido:
+        return 401, construir_error_no_autenticado(codigo)
+    except PermisoDenegado:
+        return 403, construir_error_sin_permiso(codigo)
     norma = normalizar_placa(placa)
     if not norma:
         return 404, construir_error_no_encontrado(codigo)
@@ -60,5 +80,5 @@ def ver_refrendos(request: HttpRequest, placa: str, cursor: str | None = None):
         elementos,
         siguiente,
         codigo,
-        construir_vinculos(norma),
+        construir_vinculos(norma, ambitos),
     )

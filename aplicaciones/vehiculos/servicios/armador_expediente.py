@@ -7,20 +7,22 @@ trae lo implementado; el resto de ambitos se agrega en 3.3/3.4.
 """
 
 
-def construir_vinculos(placa: str) -> dict:
-    """Construye los vinculos del expediente hacia lo implementado.
+def construir_vinculos(placa: str, ambitos: set | None = None) -> dict:
+    """Construye los vinculos del expediente hacia lo autorizado.
 
-    Fuente unica para no duplicar rutas entre contextos (3.3). El
-    candado por ambitos (filtrar lo no autorizado) llega en 3.4.
+    Fuente unica para no duplicar rutas entre contextos (3.3). Con
+    `ambitos` filtra lo no autorizado (3.4); sin `ambitos` trae los 6
+    (compatibilidad de pruebas sin candado).
 
     Args:
         placa: Placa ya normalizada para las rutas.
+        ambitos: Ambitos del token o None para traerlos todos.
 
     Returns:
-        dict: Rutas de expediente, generales y los 4 subrecursos.
+        dict: Rutas autorizadas de expediente y subrecursos.
     """
     base = f"/api/v1/vehiculos/{placa}/expediente"
-    return {
+    todos = {
         "expediente": base,
         "generales": f"{base}/generales",
         "propietario": f"{base}/propietario",
@@ -28,18 +30,26 @@ def construir_vinculos(placa: str) -> dict:
         "refrendos": f"{base}/refrendos",
         "historial": f"{base}/historial",
     }
+    if ambitos is None:
+        return todos
+    from aplicaciones.seguridad.verificador_ambitos import filtrar_vinculos
+
+    return filtrar_vinculos(todos, ambitos)
 
 
-def armar_expediente(fila: dict, codigo_correlacion: str) -> dict:
+def armar_expediente(
+    fila: dict, codigo_correlacion: str, ambitos: set | None = None
+) -> dict:
     """Arma la respuesta de expediente con subconjunto de generales.
 
     Args:
         fila: Fila del selector exacto (vista_expediente).
         codigo_correlacion: Codigo de correlacion de la peticion.
+        ambitos: Ambitos del token para filtrar `vinculos` (None = todos).
 
     Returns:
         dict: Expediente con `vehiculo`, `vinculacion`,
-            `refrendo_vigente` y `vinculos`.
+            `refrendo_vigente` y `vinculos` autorizados.
     """
     placa = fila.get("placa_norma") or fila.get("placa") or ""
     refrendo = None
@@ -86,23 +96,26 @@ def armar_expediente(fila: dict, codigo_correlacion: str) -> dict:
             "empresa_esta_autorizada": fila.get("empresa_esta_autorizada"),
         },
         "refrendo_vigente": refrendo,
-        "vinculos": construir_vinculos(placa),
+        "vinculos": construir_vinculos(placa, ambitos),
     }
 
 
-def armar_generales(fila: dict, codigo_correlacion: str) -> dict:
+def armar_generales(
+    fila: dict, codigo_correlacion: str, ambitos: set | None = None
+) -> dict:
     """Arma la respuesta de generales (caracterizacion sin restringidos).
 
     Args:
         fila: Fila del selector exacto (vista_expediente).
         codigo_correlacion: Codigo de correlacion de la peticion.
+        ambitos: Ambitos del token para filtrar `vinculos` (None = todos).
 
     Returns:
         dict: Generales con `generales` (sin vin/tarjeta ni vinculos
-            sensibles) y `vinculos` hacia expediente y generales.
+            sensibles) y `vinculos` hacia lo autorizado.
     """
     placa = fila.get("placa_norma") or fila.get("placa") or ""
-    expediente = armar_expediente(fila, codigo_correlacion)
+    expediente = armar_expediente(fila, codigo_correlacion, ambitos)
     vehiculo = expediente["vehiculo"]
     return {
         "codigo_correlacion": codigo_correlacion,

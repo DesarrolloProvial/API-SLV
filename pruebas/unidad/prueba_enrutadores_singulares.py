@@ -8,6 +8,11 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from pruebas.ayuda_autenticacion import (
+    TODOS_LOS_AMBITOS,
+    cabecera_autorizacion,
+)
+
 FILA_PROPIETARIO = {
     "placa_norma": "C123ABC",
     "placa": "C123ABC",
@@ -64,7 +69,7 @@ class PruebaSubrecursosSingulares(SimpleTestCase):
             return_value=None,
         ):
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C123ABC/expediente/propietario")
+                self.client.get("/api/v1/vehiculos/C123ABC/expediente/propietario", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
             )
 
     def test_propietario_sin_vigente_da_404(self):
@@ -80,7 +85,7 @@ class PruebaSubrecursosSingulares(SimpleTestCase):
             ),
         ):
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C123ABC/expediente/propietario")
+                self.client.get("/api/v1/vehiculos/C123ABC/expediente/propietario", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
             )
 
     @patch(
@@ -94,7 +99,7 @@ class PruebaSubrecursosSingulares(SimpleTestCase):
     def test_propietario_devuelve_vigente_y_vinculos(self, _prop, _exp):
         """Propietario trae datos minimos y los 6 vinculos."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente/propietario")
+            self.client.get("/api/v1/vehiculos/C123ABC/expediente/propietario", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
         )
         self.assertEqual(cuerpo["placa"], "C123ABC")
         self.assertEqual(
@@ -113,7 +118,7 @@ class PruebaSubrecursosSingulares(SimpleTestCase):
             return_value=None,
         ):
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C123ABC/expediente/empresa")
+                self.client.get("/api/v1/vehiculos/C123ABC/expediente/empresa", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
             )
 
     @patch(
@@ -127,7 +132,7 @@ class PruebaSubrecursosSingulares(SimpleTestCase):
     def test_empresa_devuelve_vigente_y_vinculos(self, _emp, _exp):
         """Empresa trae autorizacion operativa y los 6 vinculos."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente/empresa")
+            self.client.get("/api/v1/vehiculos/C123ABC/expediente/empresa", **cabecera_autorizacion(TODOS_LOS_AMBITOS))
         )
         self.assertEqual(cuerpo["empresa"]["numero_autorizacion"], "AUT1")
         self.assertTrue(cuerpo["empresa"]["esta_autorizada"])

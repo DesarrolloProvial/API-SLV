@@ -7,7 +7,14 @@ from aplicaciones.empresa.esquemas.esquema_empresa import EsquemaEmpresa
 from aplicaciones.empresa.selectores.selector_empresa import obtener_empresa
 from aplicaciones.empresa.servicios.armador_empresa import armar_empresa
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_no_autenticado,
     construir_error_no_encontrado,
+    construir_error_sin_permiso,
+)
+from aplicaciones.seguridad.validador_jwks import TokenInvalido
+from aplicaciones.seguridad.verificador_ambitos import (
+    PermisoDenegado,
+    autenticar_y_autorizar,
 )
 from aplicaciones.vehiculos.esquemas.esquema_busqueda import EsquemaError
 from aplicaciones.vehiculos.selectores.selector_expediente import (
@@ -22,12 +29,20 @@ enrutador = Router()
 
 @enrutador.get(
     "/{placa}/expediente/empresa",
-    response={200: EsquemaEmpresa, 404: EsquemaError},
+    response={
+        200: EsquemaEmpresa,
+        401: EsquemaError,
+        403: EsquemaError,
+        404: EsquemaError,
+    },
     tags=["empresa"],
     summary="Empresa vigente por placa exacta",
 )
 def ver_empresa(request: HttpRequest, placa: str):
-    """Devuelve la empresa vigente o 404 uniforme.
+    """Devuelve la empresa vigente o error uniforme.
+
+    Exige base + `vehiculos.empresa.lectura`: sin ambito no sale ningun
+    dato (403 uniforme).
 
     La extranjera no autorizada se comporta como inexistente: la
     verificacion del expediente ya la filtra antes del subrecurso.
@@ -37,9 +52,15 @@ def ver_empresa(request: HttpRequest, placa: str):
         placa: Placa exacta consultada.
 
     Returns:
-        Tupla `(estado, cuerpo)` 200 con empresa o 404 uniforme.
+        Tupla `(estado, cuerpo)` 200 con empresa o error uniforme.
     """
     codigo = obtener_codigo(request)
+    try:
+        _, ambitos = autenticar_y_autorizar(request, "empresa")
+    except TokenInvalido:
+        return 401, construir_error_no_autenticado(codigo)
+    except PermisoDenegado:
+        return 403, construir_error_sin_permiso(codigo)
     norma = normalizar_placa(placa)
     if not norma:
         return 404, construir_error_no_encontrado(codigo)
@@ -48,4 +69,4 @@ def ver_empresa(request: HttpRequest, placa: str):
     fila = obtener_empresa(norma)
     if fila is None:
         return 404, construir_error_no_encontrado(codigo)
-    return 200, armar_empresa(fila, codigo, construir_vinculos(norma))
+    return 200, armar_empresa(fila, codigo, construir_vinculos(norma, ambitos))

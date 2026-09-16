@@ -4,7 +4,14 @@ from ninja import Router
 
 from aplicaciones.auditoria.propagador_correlacion import obtener_codigo
 from aplicaciones.seguridad.errores_uniformes import (
+    construir_error_no_autenticado,
     construir_error_no_encontrado,
+    construir_error_sin_permiso,
+)
+from aplicaciones.seguridad.validador_jwks import TokenInvalido
+from aplicaciones.seguridad.verificador_ambitos import (
+    PermisoDenegado,
+    autenticar_y_autorizar,
 )
 from aplicaciones.vehiculos.esquemas.esquema_busqueda import EsquemaError
 from aplicaciones.vehiculos.esquemas.esquema_expediente import (
@@ -45,45 +52,70 @@ def _fila_o_error(norma: str, codigo: str):
 
 @enrutador.get(
     "/{placa}/expediente",
-    response={200: EsquemaExpediente, 404: EsquemaError},
+    response={
+        200: EsquemaExpediente,
+        401: EsquemaError,
+        403: EsquemaError,
+        404: EsquemaError,
+    },
     tags=["vehiculos"],
     summary="Expediente por placa exacta",
 )
 def ver_expediente(request: HttpRequest, placa: str):
-    """Devuelve el expediente vigente o 404 uniforme.
+    """Devuelve el expediente vigente o error uniforme.
+
+    Exige `vehiculos.lectura`: 401 sin token, 403 sin ambito, 404 sin
+    ficha; `vinculos` solo trae lo autorizado.
 
     Args:
         request: Peticion HTTP con codigo de correlacion.
         placa: Placa exacta consultada.
 
     Returns:
-        Tupla `(estado, cuerpo)` 200 con expediente o 404 uniforme.
+        Tupla `(estado, cuerpo)` 200 con expediente o error uniforme.
     """
     codigo = obtener_codigo(request)
+    try:
+        _, ambitos = autenticar_y_autorizar(request, "expediente")
+    except TokenInvalido:
+        return 401, construir_error_no_autenticado(codigo)
+    except PermisoDenegado:
+        return 403, construir_error_sin_permiso(codigo)
     fila, error = _fila_o_error(normalizar_placa(placa), codigo)
     if error is not None:
         return 404, error
-    return 200, armar_expediente(fila, codigo)
+    return 200, armar_expediente(fila, codigo, ambitos)
 
 
 @enrutador.get(
     "/{placa}/expediente/generales",
-    response={200: EsquemaGenerales, 404: EsquemaError},
+    response={
+        200: EsquemaGenerales,
+        401: EsquemaError,
+        403: EsquemaError,
+        404: EsquemaError,
+    },
     tags=["vehiculos"],
     summary="Generales por placa exacta",
 )
 def ver_generales(request: HttpRequest, placa: str):
-    """Devuelve los generales vigentes o 404 uniforme.
+    """Devuelve los generales vigentes o error uniforme.
 
     Args:
         request: Peticion HTTP con codigo de correlacion.
         placa: Placa exacta consultada.
 
     Returns:
-        Tupla `(estado, cuerpo)` 200 con generales o 404 uniforme.
+        Tupla `(estado, cuerpo)` 200 con generales o error uniforme.
     """
     codigo = obtener_codigo(request)
+    try:
+        _, ambitos = autenticar_y_autorizar(request, "generales")
+    except TokenInvalido:
+        return 401, construir_error_no_autenticado(codigo)
+    except PermisoDenegado:
+        return 403, construir_error_sin_permiso(codigo)
     fila, error = _fila_o_error(normalizar_placa(placa), codigo)
     if error is not None:
         return 404, error
-    return 200, armar_generales(fila, codigo)
+    return 200, armar_generales(fila, codigo, ambitos)

@@ -8,6 +8,11 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from pruebas.ayuda_autenticacion import (
+    TODOS_LOS_AMBITOS,
+    cabecera_autorizacion,
+)
+
 FILA_EXPEDIENTE = {
     "placa_norma": "C123ABC",
     "placa": "C123ABC",
@@ -67,7 +72,12 @@ class PruebaContratoComun(SimpleTestCase):
         """Placa parcial o vacia: mismo 404 que un inexistente."""
         for valor in ("C12", "12AB", ""):
             with self.subTest(valor=valor):
-                self._verificar_404(self.client.get(f"/api/v1/vehiculos/buscar?placa={valor}"))
+                self._verificar_404(
+                    self.client.get(
+                        f"/api/v1/vehiculos/buscar?placa={valor}",
+                        **cabecera_autorizacion(TODOS_LOS_AMBITOS),
+                    )
+                )
 
     def test_expediente_y_generales_ausentes_dan_404(self):
         """Placa exacta sin ficha: mismo 404 sin distinguir causa."""
@@ -76,10 +86,16 @@ class PruebaContratoComun(SimpleTestCase):
             return_value=None,
         ):
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C999ZZZ/expediente")
+                self.client.get(
+                    "/api/v1/vehiculos/C999ZZZ/expediente",
+                    **cabecera_autorizacion(TODOS_LOS_AMBITOS),
+                )
             )
             self._verificar_404(
-                self.client.get("/api/v1/vehiculos/C999ZZZ/expediente/generales")
+                self.client.get(
+                    "/api/v1/vehiculos/C999ZZZ/expediente/generales",
+                    **cabecera_autorizacion(TODOS_LOS_AMBITOS),
+                )
             )
 
     def test_ruta_inexistente_da_404_uniforme(self):
@@ -108,7 +124,10 @@ class PruebaRutasExitosas(SimpleTestCase):
     def test_buscar_devuelve_candidata_y_truncado(self, _buscar):
         """Buscar responde candidatas con vinculo y `truncado`."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/buscar?placa=C123ABC")
+            self.client.get(
+                "/api/v1/vehiculos/buscar?placa=C123ABC",
+                **cabecera_autorizacion(TODOS_LOS_AMBITOS),
+            )
         )
         self.assertEqual(cuerpo["placa"], "C123ABC")
         self.assertEqual(len(cuerpo["candidatas"]), 1)
@@ -124,7 +143,10 @@ class PruebaRutasExitosas(SimpleTestCase):
     def test_expediente_sin_restringidos(self, _obtener):
         """Expediente trae vehiculo/vinculacion/refrendo sin vin ni tarjeta."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente")
+            self.client.get(
+                "/api/v1/vehiculos/C123ABC/expediente",
+                **cabecera_autorizacion(TODOS_LOS_AMBITOS),
+            )
         )
         self.assertIn("vehiculo", cuerpo)
         self.assertIn("vinculacion", cuerpo)
@@ -141,7 +163,10 @@ class PruebaRutasExitosas(SimpleTestCase):
     def test_generales_sin_refrendo(self, _obtener):
         """Generales trae el subconjunto y refrendo ausente no rompe."""
         cuerpo = self._verificar_200(
-            self.client.get("/api/v1/vehiculos/C123ABC/expediente/generales")
+            self.client.get(
+                "/api/v1/vehiculos/C123ABC/expediente/generales",
+                **cabecera_autorizacion(TODOS_LOS_AMBITOS),
+            )
         )
         self.assertIn("generales", cuerpo)
         self.assertEqual(cuerpo["generales"]["marca"], "Toyota")
