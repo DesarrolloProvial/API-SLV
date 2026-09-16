@@ -6,9 +6,42 @@ Loki/Prometheus con tablero, metricas de negocio y exportacion a frio
 (`aplicaciones/auditoria/registrador_consulta.py` es el gancho exacto:
 agregar `metricas_negocio.py` y el `job intercambio-api` alli).
 """
+import json
 import logging
 
 _registro = logging.getLogger("intercambio.consulta")
+
+
+class FormateadorConsulta(logging.Formatter):
+    """JSON por linea con `codigo_correlacion` de primer nivel.
+
+    Mantiene las claves historicas (`tiempo`, `nivel`, `origen`,
+    `mensaje`) y agrega `codigo_correlacion`, `recurso`, `estado` y
+    `cliente` como campos propios para que Loki los indexe sin parsear
+    el texto. Los registros que no traen esos extras salen con valores
+    vacios (cero para `estado`).
+    """
+
+    def format(self, registro: logging.LogRecord) -> str:
+        """Serializa el registro a una linea JSON.
+
+        Args:
+            registro: Registro con extras de `registrar_consulta`.
+
+        Returns:
+            str: Linea JSON con el codigo como campo de primer nivel.
+        """
+        linea = {
+            "tiempo": self.formatTime(registro),
+            "nivel": registro.levelname,
+            "origen": registro.name,
+            "mensaje": registro.getMessage(),
+            "codigo_correlacion": getattr(registro, "codigo_correlacion", ""),
+            "recurso": getattr(registro, "recurso", ""),
+            "estado": getattr(registro, "estado", 0),
+            "cliente": getattr(registro, "cliente", ""),
+        }
+        return json.dumps(linea, ensure_ascii=False)
 
 
 def registrar_consulta(
@@ -25,7 +58,15 @@ def registrar_consulta(
     linea = f"recurso={recurso} estado={estado} codigo={codigo}"
     if cliente:
         linea += f" cliente={cliente}"
-    _registro.info(linea)
+    _registro.info(
+        linea,
+        extra={
+            "codigo_correlacion": codigo,
+            "recurso": recurso,
+            "estado": estado,
+            "cliente": cliente or "",
+        },
+    )
 
 
 def recurso_desde_ruta(ruta: str) -> str:

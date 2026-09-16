@@ -102,9 +102,9 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "json": {
-            "format": (
-                '{"tiempo": "%(asctime)s", "nivel": "%(levelname)s", '
-                '"origen": "%(name)s", "mensaje": "%(message)s"}'
+            "()": (
+                "aplicaciones.auditoria.registrador_consulta."
+                "FormateadorConsulta"
             ),
         },
     },
