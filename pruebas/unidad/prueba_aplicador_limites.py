@@ -10,6 +10,7 @@ from django.test import SimpleTestCase, override_settings
 from aplicaciones.seguridad.aplicador_limites import (
     LimiteExcedido,
     clave_cliente,
+    configurar_almacen_limites,
     limpiar_limites,
     tope_para,
     verificar_limite,
@@ -84,6 +85,52 @@ class PruebaAplicadorLimites(SimpleTestCase):
         )
         self.assertEqual(clave_cliente({"sub": "s"}), "s")
         self.assertEqual(clave_cliente({}), "anonimo")
+
+
+class _AlmacenFalso:
+    """Almacen de prueba que cuenta lecturas y escrituras."""
+
+    def __init__(self):
+        """Inicia el mapa vacio y los contadores de llamadas."""
+        self.datos = {}
+        self.lecturas = 0
+        self.escrituras = 0
+
+    def cargar(self, clave):
+        """Cuenta la lectura y devuelve una copia."""
+        self.lecturas += 1
+        return list(self.datos.get(clave, []))
+
+    def guardar(self, clave, marcas):
+        """Cuenta la escritura y guarda una copia."""
+        self.escrituras += 1
+        self.datos[clave] = list(marcas)
+
+
+class PruebaAlmacenInyectable(SimpleTestCase):
+    """El contador acepta un almacen externo (gancho Valkey)."""
+
+    def setUp(self):
+        """Instala el almacen falso antes de cada prueba."""
+        self.falso = _AlmacenFalso()
+        configurar_almacen_limites(self.falso)
+
+    def tearDown(self):
+        """Vuelve a memoria despues de cada prueba."""
+        limpiar_limites()
+
+    def test_verificar_usa_el_almacen_inyectado(self):
+        """La cuota pasa por `cargar`/`guardar` del almacen externo."""
+        verificar_limite(_PeticionFalsa(), {"client_id": "dgt"}, "empresa")
+        self.assertGreaterEqual(self.falso.lecturas, 1)
+        self.assertGreaterEqual(self.falso.escrituras, 1)
+
+    def test_limpiar_vuelve_a_memoria(self):
+        """Tras limpiar, el falso ya no recibe llamadas."""
+        limpiar_limites()
+        lecturas = self.falso.lecturas
+        verificar_limite(_PeticionFalsa(), {"client_id": "dgt"}, "empresa")
+        self.assertEqual(self.falso.lecturas, lecturas)
 
 
 @override_settings(LIMITE_BUSCAR_TOPE=2, VENTANA_LIMITE_SEG=60)
