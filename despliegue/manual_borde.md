@@ -38,5 +38,22 @@
 - [ ] Sin certificado → bloqueo en borde con error uniforme y correlacion.
 - [ ] Certificado revocado/expirado → bloqueo sin llegar a la API.
 - [ ] `POST` o ruta fuera de allowlist → denegado y registrado sin personales.
-- [ ] `/salud` y `/metricas` solo responden en red interna.
+- [ ] `/salud` y `/metricas` solo responden en red interna (`/metricas` se
+  proxya al API; la vista niega lo externo con 404: probar `curl` interno
+  200 y origen externo 404).
+- [ ] `/api/openapi.json` no sale por el borde (solo red interna directa).
 - [ ] Registro JSON sin `Authorization`, secretos ni placas.
+
+## 6. Endurecimiento fuera de desarrollo
+
+En preproduccion y produccion la allowlist es cerrada por capas (nada
+nuevo que instalar, solo verificacion):
+
+1. WAF (R2) bloquea lo externo fuera de `GET /api/v1/vehiculos/*`.
+2. `nginx` solo proxya `GET`: `/api/v1/vehiculos/buscar` (con ritmo),
+   `/api/v1/vehiculos/` (resto de solo lectura), `/salud`, `/metricas` y
+   `/api/openapi.json` (estos tres solo red interna); lo demas cae a 404.
+3. El API lleva `docs_url=None` (sin UI interactiva) y `/metricas` niega
+   por IP privada/`REDES_METRICAS_PERMITIDAS` aunque alguien la alcance.
+4. `ANFITRIONES_PERMITIDOS` sin comodines y secretos solo por gestor
+   externo (ver `despliegue/archivo_ambiente_ejemplo`).
