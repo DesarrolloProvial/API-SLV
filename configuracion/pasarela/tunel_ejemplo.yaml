@@ -1,4 +1,8 @@
 # Ejemplo de tunel Cloudflare (sin puertos entrantes publicos).
+# MODO LOCAL con credenciales: solo desarrollo/referencia. En PRODUCCION el
+# tunel va gestionado remotamente por token (`TOKEN_TUNEL`, comando
+# `tunnel --no-autoupdate run --token ...`), SIN este archivo: ver
+# `despliegue/composicion_produccion.yaml` (servicio `tunel`).
 # Copiar como base operativa; el identificador real va por gestor externo.
 tunel: ${TUNEL_ID}
 credenciales-archivo: /etc/cloudflared/credenciales.json

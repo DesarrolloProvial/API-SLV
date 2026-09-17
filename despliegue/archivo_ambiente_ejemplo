@@ -7,6 +7,10 @@ CLAVE_BD=
 ANFITRION_BD=
 PUERTO_BD=
 TUNEL_ID=
+# Produccion: tunel gestionado remotamente por token (sin credenciales).
+# TUNEL_ID es SOLO referencia del modo local con credenciales
+# (configuracion/pasarela/tunel_ejemplo.yaml); en produccion NO se usa.
+TOKEN_TUNEL=
 DOMINIO_INTERCAMBIO=
 # Espejo (runbooks manuales; solo nombres, sin valores).
 ANFITRION_ERP=
@@ -25,6 +29,8 @@ TOPE_CANDIDATAS=
 TOPE_REFERENDOS=
 TOPE_HISTORIAL=
 # Keycloak/JWKS (solo nombres; vigencia corta en el IdP).
+# Fase 1: valores RESERVADOS del convenio (toda peticion da 401); fase 2:
+# valores reales del reino intercambio-dgt (ver manual_dokploy.md paso 6).
 URL_JWKS=
 EMISOR_JWT=
 AUDIENCIA_JWT=
@@ -37,7 +43,7 @@ LIMITE_RECURSO_TOPE=
 VENTANA_LIMITE_SEG=
 # Redes extra (CIDR) para raspar /metricas fuera de la red privada.
 REDES_METRICAS_PERMITIDAS=
-# PKI interna step-ca (solo nombres; huellas en despliegue/inventario_huellas.md).
+# PKI interna step-ca — FASE 2 (solo nombres; huellas en despliegue/inventario_huellas.md).
 DIRECCION_CA_INTERNA=
 HUELLA_CA_INTERMEDIA=
 PROVISIONADOR_ACME=
