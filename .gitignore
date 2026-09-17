@@ -22,9 +22,6 @@ estaticos_recogidos/
 *.pfx
 secreto*.json
 
-# Docker
-.dockerignore
-
 # Editores
 .vscode/
 .idea/

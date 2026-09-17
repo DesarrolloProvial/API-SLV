@@ -1,0 +1,12 @@
+# Contexto de build limpio para la imagen (Dokploy/local).
+# La imagen NO necesita: historial de git, entornos locales, basura de Python.
+.git/
+.github/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+*.log
+.env
+.env.*
