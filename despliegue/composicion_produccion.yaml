@@ -1,0 +1,117 @@
+# Composicion de PRODUCCION (Dokploy, proyecto `intercambio` APARTE).
+#
+# Mismo servidor fisico que el ERP, proyecto Dokploy distinto: la entrada es
+# SOLO por el tunel Cloudflare. NINGUN servicio publica puertos al anfitrion
+# (no hay `ports:` en este archivo) para no colisionar con el ERP.
+# Toda variable viene del gestor de Dokploy (${VAR}); aqui no hay valores
+# ni secretos, solo nombres (ver `despliegue/archivo_ambiente_ejemplo`).
+#
+# FASE 2 (aun NO crear): `step-ca` (PKI interna, `despliegue/manual_pki.md`)
+# y `keycloak` (IdP real, reino `intercambio-dgt`) se agregan como servicios
+# de ESTA misma red interna, tambien sin puertos publicados.
+
+name: intercambio-produccion
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: despliegue/archivo_docker
+    environment:
+      DJANGO_SETTINGS_MODULE: configuracion.ajustes_produccion
+      LLAVE_SECRETA: ${LLAVE_SECRETA}
+      ANFITRIONES_PERMITIDOS: ${ANFITRIONES_PERMITIDOS}
+      NOMBRE_BD: ${NOMBRE_BD}
+      USUARIO_BD: ${USUARIO_BD}
+      CLAVE_BD: ${CLAVE_BD}
+      ANFITRION_BD: postgres-espejo
+      PUERTO_BD: ${PUERTO_BD}
+      ALIAS_ESPEJO: ${ALIAS_ESPEJO}
+      PERMITIR_PLACAS_EXTRANJERAS: ${PERMITIR_PLACAS_EXTRANJERAS}
+      TOPE_CANDIDATAS: ${TOPE_CANDIDATAS}
+      TOPE_REFERENDOS: ${TOPE_REFERENDOS}
+      TOPE_HISTORIAL: ${TOPE_HISTORIAL}
+      URL_JWKS: ${URL_JWKS}
+      EMISOR_JWT: ${EMISOR_JWT}
+      AUDIENCIA_JWT: ${AUDIENCIA_JWT}
+      TOLERANCIA_RELOJ_SEG: ${TOLERANCIA_RELOJ_SEG}
+      TIEMPO_CACHE_JWKS_SEG: ${TIEMPO_CACHE_JWKS_SEG}
+      TOKENS_REVOCADOS: ${TOKENS_REVOCADOS}
+      LIMITE_BUSCAR_TOPE: ${LIMITE_BUSCAR_TOPE}
+      LIMITE_RECURSO_TOPE: ${LIMITE_RECURSO_TOPE}
+      VENTANA_LIMITE_SEG: ${VENTANA_LIMITE_SEG}
+      REDES_METRICAS_PERMITIDAS: ${REDES_METRICAS_PERMITIDAS}
+    depends_on:
+      postgres-espejo:
+        condition: service_healthy
+    networks:
+      - red-intercambio
+    restart: unless-stopped
+    healthcheck:
+      # La imagen final (python:3.14-slim) no trae curl/wget: se usa el
+      # propio interprete contra /salud en red interna.
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/salud')"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  postgres-espejo:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${NOMBRE_BD}
+      POSTGRES_USER: ${USUARIO_BD}
+      POSTGRES_PASSWORD: ${CLAVE_BD}
+    volumes:
+      - datos-espejo-produccion:/var/lib/postgresql/data
+    networks:
+      - red-intercambio
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ../configuracion/pasarela/servidor_nginx.conf:/etc/nginx/conf.d/intercambio.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - red-intercambio
+    restart: unless-stopped
+    # Sin healthcheck propio: se verifica con `nginx -t` y curl interno
+    # en `despliegue/manual_dokploy.md` paso 3.
+
+  tunel:
+    image: cloudflare/cloudflared:2026.9.0
+    # Tunel GESTIONADO REMOTAMENTE por token: sin archivo de credenciales.
+    # El modo con `TUNEL_ID` + credenciales solo vive en el ejemplo local
+    # (`configuracion/pasarela/tunel_ejemplo.yaml`); aqui NO se monta nada.
+    command: tunnel --no-autoupdate run --token ${TOKEN_TUNEL}
+    depends_on:
+      - nginx
+    networks:
+      - red-intercambio
+    restart: unless-stopped
+    # Sin healthcheck propio: el estado se verifica en el panel Cloudflare
+    # (tunel CONECTADO) segun el manual, paso 3.
+
+  # FASE 2: aqui van `step-ca` y `keycloak` (misma red, sin puertos).
+  # Ver `despliegue/manual_dokploy.md` paso 6 y `despliegue/manual_pki.md`.
+
+networks:
+  red-intercambio:
+    name: red-intercambio
+
+volumes:
+  datos-espejo-produccion:
+    name: datos-espejo-produccion
