@@ -55,12 +55,17 @@ Dónde: configuración del servicio → sección de variables de entorno.
 | Servicio | Variables (solo nombres) |
 |---|---|
 | `api` | `LLAVE_SECRETA`, `ANFITRIONES_PERMITIDOS`, `NOMBRE_BD`, `USUARIO_BD`, `CLAVE_BD`, `PUERTO_BD`, `ALIAS_ESPEJO`, `PERMITIR_PLACAS_EXTRANJERAS`, `TOPE_CANDIDATAS`, `TOPE_REFERENDOS`, `TOPE_HISTORIAL`, `URL_JWKS`, `EMISOR_JWT`, `AUDIENCIA_JWT`, `TOLERANCIA_RELOJ_SEG`, `TIEMPO_CACHE_JWKS_SEG`, `TOKENS_REVOCADOS`, `LIMITE_BUSCAR_TOPE`, `LIMITE_RECURSO_TOPE`, `VENTANA_LIMITE_SEG`, `REDES_METRICAS_PERMITIDAS` |
-| `postgres-espejo` | `NOMBRE_BD`, `USUARIO_BD`, `CLAVE_BD` (como `POSTGRES_*`) |
+| `postgres-espejo` | `NOMBRE_BD`, `USUARIO_ADMIN_BD`, `CLAVE_ADMIN_BD` (como `POSTGRES_*`) |
 | `tunel` | `TOKEN_TUNEL` (el túnel va por token; `TUNEL_ID` es solo referencia del modo local con credenciales y aquí NO se usa) |
 
 Notas:
 
 - `ANFITRION_BD` queda fijo a `postgres-espejo` (nombre del servicio).
+- `USUARIO_ADMIN_BD`/`CLAVE_ADMIN_BD` son del CONTENEDOR (inicializan el
+  volumen); el rol lector del API NO se crea ahí: lo crea el SQL del espejo
+  tras la ventana (`orden_aplicacion.md`). Fase 1: `USUARIO_BD`/`CLAVE_BD`
+  del API pueden llevar credenciales administradoras TEMPORALES; tras la
+  ventana + SQL, cámbialas por las del rol lector y redesplega.
 - Fase 1: `URL_JWKS`/`EMISOR_JWT`/`AUDIENCIA_JWT` llevan los valores
   RESERVADOS del convenio (el IdP real llega en el paso 6); producción
   exige `URL_JWKS` no vacía y sin IdP toda petición responde 401 uniforme.

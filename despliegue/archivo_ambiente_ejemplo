@@ -4,6 +4,10 @@ ANFITRIONES_PERMITIDOS=
 NOMBRE_BD=
 USUARIO_BD=
 CLAVE_BD=
+# Postgres espejo: usuario ADMINISTRADOR del contenedor (inicializa el
+# volumen); el rol lector del API lo crea el SQL del espejo tras la ventana.
+USUARIO_ADMIN_BD=
+CLAVE_ADMIN_BD=
 ANFITRION_BD=
 PUERTO_BD=
 TUNEL_ID=

@@ -62,8 +62,11 @@ services:
     image: postgres:18-alpine
     environment:
       POSTGRES_DB: ${NOMBRE_BD}
-      POSTGRES_USER: ${USUARIO_BD}
-      POSTGRES_PASSWORD: ${CLAVE_BD}
+      # Usuario ADMINISTRADOR del contenedor (inicializa el volumen).
+      # NO es el usuario del API: el rol lector lo crea el SQL del espejo
+      # (base_de_datos/migraciones_espejo/orden_aplicacion.md) tras la ventana.
+      POSTGRES_USER: ${USUARIO_ADMIN_BD}
+      POSTGRES_PASSWORD: ${CLAVE_ADMIN_BD}
     volumes:
       - datos-espejo-produccion:/var/lib/postgresql/data
     networks:
