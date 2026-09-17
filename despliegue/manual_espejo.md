@@ -5,6 +5,13 @@
 > operador con acceso autorizado, en la ventana agendada, verificando el paso
 > anterior antes de seguir. Sin secretos ni valores reales: solo nombres de
 > variables (`despliegue/archivo_ambiente_ejemplo`).
+>
+> **Fuente de verdad ejecutable:** los comandos de este manual viven también
+> como scripts versionados e idempotentes: lado ERP en `base_de_datos/erp/`
+> (`01_rol_replicacion.sql` … `04_verificacion_erp.sql`) y lado espejo en
+> `base_de_datos/migraciones_espejo/suscripcion.sql`. Ante divergencia entre
+> este texto y lo ejecutado en el despliegue real (`openspec/changes/
+> api-intercambio-vehiculos/apply.md` en el repo ERP), prevalece lo real.
 
 ## 0. Requisitos previos
 
