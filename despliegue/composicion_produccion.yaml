@@ -113,6 +113,33 @@ services:
     # Sin healthcheck propio: el estado se verifica en el panel Cloudflare
     # (tunel CONECTADO) segun el manual, paso 3.
 
+  deriva-esquema:
+    image: postgres:18-alpine
+    # Guardian anti-deriva (2026-09-17): compara las 18 tablas ERP vs espejo
+    # cada 15 min y agrega columnas faltantes (nullable, sin default). JAMAS
+    # borra ni modifica: sobrantes y tipos distintos solo se AVISAN en logs.
+    # Vive en el repo (sobrevive redeploys) y corre solo: cero manos.
+    # Requiere env CLAVE_REPLICA_ERP en Dokploy (una sola vez).
+    command: >
+      sh -c 'printf "%s\n" "*/15 * * * * sh /opt/intercambio/sincronizar_esquema.sh >>/proc/1/fd/1 2>&1" > /tmp/cron.txt
+      && crontab /tmp/cron.txt
+      && sh /opt/intercambio/sincronizar_esquema.sh
+      && exec crond -f -l 8'
+    environment:
+      PGPASSWORD_REPLICA: ${CLAVE_REPLICA_ERP:?CLAVE_REPLICA_ERP is required}
+      PGPASSWORD_ADMIN: ${CLAVE_ADMIN_BD:?CLAVE_ADMIN_BD is required}
+      NOMBRE_BD: ${NOMBRE_BD:?NOMBRE_BD is required}
+      USUARIO_ADMIN_BD: ${USUARIO_ADMIN_BD:?USUARIO_ADMIN_BD is required}
+    volumes:
+      - ./sincronizar_esquema.sh:/opt/intercambio/sincronizar_esquema.sh:ro
+    depends_on:
+      postgres-espejo:
+        condition: service_healthy
+    networks:
+      - red-intercambio
+      - repl
+    restart: unless-stopped
+
   # FASE 2: aqui van `step-ca` y `keycloak` (misma red, sin puertos).
   # Ver `despliegue/manual_dokploy.md` paso 6 y `despliegue/manual_pki.md`.
 
