@@ -70,7 +70,12 @@ services:
     volumes:
       - datos-espejo-produccion:/var/lib/postgresql/data
     networks:
+      # `red-intercambio`: red propia del stack. `red-erp`: red privada del
+      # proyecto ERP para la SUSCRIPCIÓN (lectura unidireccional ERP→espejo);
+      # permite resolver el contenedor del ERP (`erp_postgres`, `postgres`)
+      # sin publicar puertos del ERP. Solo este servicio lleva las 2 redes.
       - red-intercambio
+      - red-erp
     restart: unless-stopped
     healthcheck:
       test:
@@ -114,6 +119,13 @@ services:
 networks:
   red-intercambio:
     name: red-intercambio
+  # Red PRIVADA del proyecto ERP en Dokploy (obtenida del contenedor del ERP).
+  # NO se modifica: solo se usa. Permite al espejo resolver por nombre el
+  # Postgres del ERP y abrir la suscripción de replicación (solo lectura,
+  # rol de replicación). External = debe existir ya en el servidor.
+  red-erp:
+    name: erpprovial-erp-kz9ipv_erp_network
+    external: true
 
 volumes:
   datos-espejo-produccion:
