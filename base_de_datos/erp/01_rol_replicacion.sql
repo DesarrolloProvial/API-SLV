@@ -17,24 +17,22 @@
 -- Idempotente: re-ejecutable sin fallar. Si el rol ya existe, reafirma sus
 -- atributos y su clave (caso: restauracion logica del ERP, ver
 -- `despliegue/manual_recuperacion.md` escenario B).
+-- Usa `\gexec` de psql (la sentencia se genera condicionalmente y se ejecuta
+-- fuera de bloque; las `:'variables'` NO se interpolan dentro de bloques
+-- dollar-quoted).
 --
 -- Salida esperada: una fila con rolreplication=t, rolconnlimit=1,
 -- rolsuper=f; y tablas_con_select=18.
 
-DO $bloque$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rol_replicacion_intercambio') THEN
-        CREATE ROLE rol_replicacion_intercambio WITH LOGIN REPLICATION
-            NOSUPERUSER NOCREATEDB NOCREATEROLE
-            PASSWORD :'clave_replica' CONNECTION LIMIT 1;
-    ELSE
-        ALTER ROLE rol_replicacion_intercambio WITH LOGIN REPLICATION
-            NOSUPERUSER NOCREATEDB NOCREATEROLE
-            PASSWORD :'clave_replica' CONNECTION LIMIT 1;
-        RAISE NOTICE 'El rol ya existia: atributos y clave reafirmados.';
-    END IF;
-END
-$bloque$;
+SELECT CASE
+    WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rol_replicacion_intercambio')
+    THEN $$ALTER ROLE rol_replicacion_intercambio WITH LOGIN REPLICATION
+        NOSUPERUSER NOCREATEDB NOCREATEROLE CONNECTION LIMIT 1
+        PASSWORD $$ || quote_literal(:'clave_replica') || $$;$$
+    ELSE $$CREATE ROLE rol_replicacion_intercambio WITH LOGIN REPLICATION
+        NOSUPERUSER NOCREATEDB NOCREATEROLE CONNECTION LIMIT 1
+        PASSWORD $$ || quote_literal(:'clave_replica') || $$;$$
+END \gexec
 
 GRANT CONNECT ON DATABASE :"nombre_bd" TO rol_replicacion_intercambio;
 GRANT USAGE ON SCHEMA public TO rol_replicacion_intercambio;
