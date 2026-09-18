@@ -43,8 +43,8 @@ repositorio git.
 3. NO tocar `despliegue/composicion.yaml` (es de desarrollo local).
 4. No declarar puertos publicados: el compose ya viene sin `ports:`.
 
-Verificación: el servicio muestra los 4 componentes (`api`,
-`postgres-espejo`, `nginx`, `tunel`) antes del primer despliegue.
+Verificación: el servicio muestra los 5 componentes (`api`,
+`postgres-espejo`, `nginx`, `tunel`, `deriva-esquema`) antes del primer despliegue.
 Si falla: revisar repo/rama/ruta; nada se despliega a ciegas.
 
 ## Paso 2 — Variables de entorno
@@ -57,6 +57,7 @@ Dónde: configuración del servicio → sección de variables de entorno.
 | `api` | `LLAVE_SECRETA`, `ANFITRIONES_PERMITIDOS`, `NOMBRE_BD`, `USUARIO_BD`, `CLAVE_BD`, `PUERTO_BD`, `ALIAS_ESPEJO`, `PERMITIR_PLACAS_EXTRANJERAS`, `TOPE_CANDIDATAS`, `TOPE_REFERENDOS`, `TOPE_HISTORIAL`, `URL_JWKS`, `EMISOR_JWT`, `AUDIENCIA_JWT`, `TOLERANCIA_RELOJ_SEG`, `TIEMPO_CACHE_JWKS_SEG`, `TOKENS_REVOCADOS`, `LIMITE_BUSCAR_TOPE`, `LIMITE_RECURSO_TOPE`, `VENTANA_LIMITE_SEG`, `REDES_METRICAS_PERMITIDAS` |
 | `postgres-espejo` | `NOMBRE_BD`, `USUARIO_ADMIN_BD`, `CLAVE_ADMIN_BD` (como `POSTGRES_*`) |
 | `tunel` | `TOKEN_TUNEL` (el túnel va por token; `TUNEL_ID` es solo referencia del modo local con credenciales y aquí NO se usa) |
+| `deriva-esquema` | `CLAVE_REPLICA_ERP` (nueva, paso 8; reutiliza `NOMBRE_BD`, `USUARIO_ADMIN_BD`, `CLAVE_ADMIN_BD` para leer el espejo) |
 
 Notas:
 
@@ -85,7 +86,7 @@ Qué: desplegar y comprobar cada capa solo por red interna.
 Dónde: registro del despliegue en Dokploy + terminal del servidor
 (`docker exec`) + panel Cloudflare (estado del túnel).
 
-1. Desplegar el servicio Compose y esperar estado sano en los 4.
+1. Desplegar el servicio Compose y esperar estado sano en los 5.
 2. `api` responde `/salud`: ejecutar desde dentro de la red interna
    (p. ej. `docker exec` contra `api` o un contenedor de la red
    `red-intercambio`) → 200.
@@ -165,3 +166,45 @@ La ventana del ERP (rol de replicación, `wal_level`, publicación,
 suscripción) se agenda y ejecuta por separado; este despliegue NO toca el
 ERP ni sus servicios. Verificación de ese frente en su propio manual.
 Si falla algo del espejo: no se toca este stack; se sigue el runbook.
+
+## Paso 8 — Pasillo dedicado de replicación + guardián anti-deriva
+
+Qué: mover el espejo de la red general del ERP a un pasillo punto a punto
+(`repl_intercambio`: solo `erp_postgres` + espejo) y activar el guardián que
+agrega columnas nuevas solo (cada 15 min). Anti-movimiento lateral: el espejo
+ya no resuelve ni alcanza los demás contenedores del ERP.
+Dónde: compose del ERP + este compose (ya versionados) + Dokploy (variables
+y 2 redespliegues, EN ORDEN).
+
+1. Variables (una sola vez): en el entorno del servicio Compose agregar
+   `CLAVE_REPLICA_ERP` = clave del rol `rol_replicacion_intercambio` del ERP
+   (aquí solo el nombre; el valor vive en el gestor). Sin ella el servicio
+   `deriva-esquema` no arranca (falla a propósito con mensaje claro).
+2. Dokploy → proyecto del ERP → servicio `postgres` → redesplegar. Crea la
+   red `repl_intercambio` y reconecta (ERP sin base ~1-2 min). La réplica NO
+   se rompe en este paso: ambos siguen compartiendo la red anterior durante
+   la transición.
+3. Dokploy → proyecto `intercambio` → redesplegar el servicio Compose. El
+   espejo se muda al pasillo y retoma solo desde el slot; `deriva-esquema`
+   arranca y corre la primera comparación al momento.
+
+Verificación:
+- Réplica viva (terminal del espejo, admin): `TABLE pg_stat_subscription;`
+  → solo `apply` corriendo; `SELECT count(*) FROM slv_vehiculobase;`
+  coincide con el ERP.
+- Encierro (shell del espejo): `getent hosts erp_postgres` resuelve;
+  `getent hosts erp_gunicorn_interno` y `getent hosts erp_minio` vacíos.
+- Guardián (registro del servicio `deriva-esquema`): línea
+  `deriva resumen: agregadas=0 avisos=0 fallos=0` al arrancar y cada 15 min.
+Si falla: si `deriva-esquema` reinicia en bucle → falta `CLAVE_REPLICA_ERP`
+(paso 1); si el espejo no resuelve `erp_postgres` → el paso 2 no se aplicó
+(red externa ausente); reintentar EN ORDEN.
+
+## Operación continua — columnas nuevas (sin tortura)
+
+Tras cada `migrate` del ERP que toque tablas `slv_*`, no hay que hacer nada:
+en ≤15 min el guardián agrega la columna al espejo (nullable) y lo anota en
+su registro. Regla: aditivo → espejo primero (automático), ERP después
+(tu migrate); destructivo (`DROP`) → al revés y a mano, el guardián jamás
+borra. Si la columna nueva tiene histórico que rellenar, el propio registro
+imprime el one-liner de backfill (`DROP/CREATE SUBSCRIPTION`, una vez).
