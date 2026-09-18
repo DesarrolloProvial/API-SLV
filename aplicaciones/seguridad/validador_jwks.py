@@ -1,15 +1,16 @@
-"""Validacion de JWT contra JWKS (tarea 3.4).
+"""Validacion de JWT contra JWKS (tarea 3.4, endurecido en 0.2/3.4).
 
 Produccion: `RS256` con llaves de `URL_JWKS` (Keycloak, reino
 `intercambio-dgt`), `EMISOR_JWT` y `AUDIENCIA_JWT` configurados; vigencia
 corta la define el IdP. Desarrollo/pruebas: sin `URL_JWKS` se acepta
-`HS256` firmado con `LLAVE_SECRETA` (solo local, jamas en produccion).
+`HS256` firmado con `LLAVE_SECRETA`, SOLO local y con advertencia
+explicita (jamas en pre/produccion, que exigen `URL_JWKS`).
 
 Token ausente, expirado o con firma invalida -> `TokenInvalido` (el
 enrutador lo traduce al 401 `no_autenticado` uniforme). La revocacion
 real es Keycloak (revocar cliente/token) + denegar en el borde; aqui hay
 una lista de `jti` denegados (`TOKENS_REVOCADOS` + `revocar_token()`)
-como segunda capa de emergencia.
+como segunda capa de emergencia. Fase 1 de borde (tunel/nginx/DGT) fuera.
 """
 import base64
 import json
@@ -17,6 +18,7 @@ import logging
 import threading
 import time
 import urllib.request
+import warnings
 from typing import Final
 
 import jwt
@@ -177,6 +179,17 @@ def _validar_con_jwks(token: str, cabecera: dict) -> dict:
 
 def _validar_desarrollo(token: str) -> dict:
     """Valida `HS256` con `LLAVE_SECRETA` (solo sin `URL_JWKS`)."""
+    # 0.2/3.4: fallback SOLO local; pre/prod exigen `URL_JWKS`, asi que
+    # este camino jamas corre fuera de desarrollo/pruebas.
+    _registro.warning(
+        "Validacion HS256 solo-local sin URL_JWKS; jamas en pre/produccion."
+    )
+    warnings.warn(
+        "Sin URL_JWKS se valida HS256 solo-local; "
+        "pre/produccion exigen JWKS.",
+        UserWarning,
+        stacklevel=3,
+    )
     secreta = getattr(settings, "LLAVE_SECRETA", "")
     if not secreta:
         raise TokenInvalido("Sin llave de validacion.")

@@ -7,8 +7,9 @@ simulados; sin BD.
 from datetime import date
 from unittest.mock import patch
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+from aplicaciones.seguridad.validador_jwks import limpiar_cache_jwks
 from pruebas.ayuda_autenticacion import cabecera_autorizacion
 
 BASE = ["vehiculos.lectura"]
@@ -152,6 +153,34 @@ class PruebaMatrizAmbitos(SimpleTestCase):
                 ):
                     respuesta = self.client.get(ruta, **extra)
                     self._verificar_error(respuesta, 401, "no_autenticado")
+
+    @override_settings(
+        URL_JWKS=(
+            "https://idp.ejemplo/realms/intercambio-dgt/"
+            "protocol/openid-connect/certs"
+        )
+    )
+    def test_valores_reservados_0_2_dan_401_uniforme(self):
+        """Con JWKS reservado 0.2 (Fase 1, IdP real fuera) todo da 401."""
+        from unittest.mock import patch
+        from urllib.error import URLError
+
+        limpiar_cache_jwks()
+        try:
+            with patch(
+                "urllib.request.urlopen", side_effect=URLError("caido")
+            ):
+                for recurso, ruta in RUTAS.items():
+                    with self.subTest(recurso=recurso):
+                        respuesta = self.client.get(
+                            ruta, **cabecera_autorizacion(BASE)
+                        )
+                        cuerpo = self._verificar_error(
+                            respuesta, 401, "no_autenticado"
+                        )
+                        self.assertNotIn("vehiculo", cuerpo)
+        finally:
+            limpiar_cache_jwks()
 
     def test_sin_ambito_del_recurso_da_403_sin_dato(self):
         """Token valido pero sin el ambito: 403 uniforme sin dato."""
