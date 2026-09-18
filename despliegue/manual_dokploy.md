@@ -68,8 +68,9 @@ Notas:
   del API pueden llevar credenciales administradoras TEMPORALES; tras la
   ventana + SQL, cámbialas por las del rol lector y redesplega.
 - Fase 1: `URL_JWKS`/`EMISOR_JWT`/`AUDIENCIA_JWT` llevan los valores
-  RESERVADOS del convenio (el IdP real llega en el paso 6); producción
-  exige `URL_JWKS` no vacía y sin IdP toda petición responde 401 uniforme.
+  RESERVADOS 0.2 del convenio (el IdP real llega en el paso 6);
+  producción exige `URL_JWKS` no vacía y sin IdP toda petición responde
+  401 uniforme. Fase 1 de borde (túnel/nginx/DGT) fuera de este cambio.
 - Fase 2 (aún NO cargar): `DIRECCION_CA_INTERNA`,
   `HUELLA_CA_INTERMEDIA`, `PROVISIONADOR_ACME`, `VIGENCIA_HOJA_DIAS`,
   `URL_CRL_INTERMEDIA` (PKI) + valores reales del IdP.
@@ -149,7 +150,8 @@ Dónde: Dokploy (nuevos servicios) + `step-ca` + Keycloak + terminal.
    `despliegue/inventario_huellas.md`.
 2. Keycloak real: reino `intercambio-dgt`, cliente `dgt-intercambio`,
    5 ámbitos (`vehiculos.lectura` + 4 por recurso); cargar
-   `URL_JWKS`/`EMISOR_JWT`/`AUDIENCIA_JWT` reales en el gestor.
+   `URL_JWKS`/`EMISOR_JWT`/`AUDIENCIA_JWT` reales en el gestor
+   (reemplazan los RESERVADOS 0.2 de la fase 1, solo nombres en repo).
 3. Redesplegar el servicio Compose.
 4. Re-verificación: sin token → 401 uniforme; con token válido y ámbito
    → 200; con ámbito insuficiente → 403.

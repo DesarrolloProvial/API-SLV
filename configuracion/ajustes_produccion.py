@@ -18,6 +18,7 @@ if not BASES_DATOS_CLAVE:  # noqa: F405
         "CLAVE_BD vacia en produccion: defina la clave del lector."
     )
 if not URL_JWKS:  # noqa: F405
+    # 0.2/3.4: sin JWKS la API caeria al HS256 solo-local; falla cerrado.
     raise ImproperlyConfigured(
         "URL_JWKS vacia en produccion: sin JWKS la API caeria a HS256 local."
     )

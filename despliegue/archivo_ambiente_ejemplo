@@ -33,8 +33,9 @@ TOPE_CANDIDATAS=
 TOPE_REFERENDOS=
 TOPE_HISTORIAL=
 # Keycloak/JWKS (solo nombres; vigencia corta en el IdP).
-# Fase 1: valores RESERVADOS del convenio (toda peticion da 401); fase 2:
-# valores reales del reino intercambio-dgt (ver manual_dokploy.md paso 6).
+# 0.2/3.4: valores RESERVADOS del convenio en Fase 1 (toda peticion da
+# 401 uniforme); valores reales del reino intercambio-dgt en Fase 2
+# (ver manual_dokploy.md paso 6). Fase 1 de borde (tunel/nginx/DGT) fuera.
 URL_JWKS=
 EMISOR_JWT=
 AUDIENCIA_JWT=
